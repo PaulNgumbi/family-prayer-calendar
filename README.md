@@ -3,7 +3,7 @@
 <h1 align="center">Family Prayer</h1>
 <p align="center"><b>Catholic Family Prayer Calendar for Android</b><br>October 2026 – December 2027</p>
 
-<p align="center"><a href="https://github.com/PaulNgumbi/family-prayer-calendar/releases/latest/download/Catholic-Family-Prayer.apk"><b>⬇ Download the app (APK, 181 KB)</b></a><br><sub>or <a href="https://github.com/PaulNgumbi/family-prayer-calendar/raw/main/Catholic-Family-Prayer.apk">download directly from this repository</a></sub></p>
+<p align="center"><a href="https://github.com/PaulNgumbi/family-prayer-calendar/raw/main/Catholic-Family-Prayer.apk"><b>⬇ Download the app (APK, 181 KB)</b></a></p>
 
 ## What's inside
 
