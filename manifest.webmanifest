@@ -1,7 +1,7 @@
 {
   "name": "Catholic Family Prayer Calendar",
   "short_name": "Family Prayer",
-  "description": "Daily Catholic family prayers, the Church year, faith formation and an interactive Rosary (Oct 2026 – Dec 2027).",
+  "description": "Daily family prayers, the Church year, faith formation and an interactive Rosary (Oct 2026 – Dec 2027).",
   "id": "./",
   "start_url": "./",
   "scope": "./",
