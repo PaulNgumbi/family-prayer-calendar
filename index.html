@@ -1,0 +1,761 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#22305e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Family Prayer">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Daily Catholic family prayers, the Church year, faith formation and an interactive Rosary.">
+
+<title>Catholic Family Prayer Calendar</title>
+
+<style>
+@font-face{font-family:'Oswald';font-weight:500;font-style:normal;font-display:swap;src:url('fonts/oswald-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Oswald';font-weight:700;font-style:normal;font-display:swap;src:url('fonts/oswald-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Nunito';font-weight:600;font-style:normal;font-display:swap;src:url('fonts/nunito-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Nunito';font-weight:800;font-style:normal;font-display:swap;src:url('fonts/nunito-latin-800-normal.woff2') format('woff2')}
+@font-face{font-family:'Caveat';font-weight:700;font-style:normal;font-display:swap;src:url('fonts/caveat-latin-700-normal.woff2') format('woff2')}
+
+/* Layout: a colored month "spread" (framed scene + psalm card + question bubble), then a grid of tappable day cards; tapping opens a prayer sheet. Single deliberate look: each month paints the page in its own color. */
+:root{
+  color-scheme:light;
+  --m:#3c4f6b; --a:#f2a541;
+  --card:#ffffff; --ink:#1f2430; --soft-ink:#5d6472; --line:#e3e6ec;
+  --head:"Oswald","Arial Narrow",Impact,sans-serif;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --script:"Caveat","Comic Sans MS",cursive;
+}
+html{background:var(--m)}
+body{background:var(--m);color:#fff;font-family:var(--body);font-weight:600;font-size:15px;line-height:1.5;transition:background-color .35s}
+@media (prefers-reduced-motion:reduce){body,.day,.sheet,.scrim{transition:none!important;animation:none!important}}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:22px 56px}
+h1,h2,h3{font-family:var(--head);font-weight:700;text-transform:uppercase;margin:0;letter-spacing:.02em}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;margin-bottom:14px}
+.brand h1{font-size:clamp(26px,4vw,38px);line-height:1}
+.brand p{margin:2px 0 0;font-weight:800;opacity:.85;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.today-btn{font:700 15px var(--head);text-transform:uppercase;letter-spacing:.05em;background:var(--a);color:var(--ink);border:0;border-radius:999px;padding:10px 18px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.today-btn:hover{transform:translateY(-1px)}
+nav.months{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:22px}
+nav.months .yr{font:700 13px var(--head);letter-spacing:.12em;opacity:.8;margin:0 2px 0 8px}
+nav.months .yr:first-child{margin-left:0}
+nav.months button{font:700 13px var(--head);text-transform:uppercase;letter-spacing:.06em;border:2px solid rgba(255,255,255,.55);background:transparent;color:#fff;padding:5px 11px;border-radius:999px;cursor:pointer}
+nav.months button:hover{background:rgba(255,255,255,.15)}
+nav.months button[aria-current="true"]{background:#fff;color:var(--m);border-color:#fff}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+/* spread */
+.spread{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:22px;align-items:stretch}
+.art{position:relative;border-radius:18px;overflow:hidden;box-shadow:0 0 0 5px #fff;aspect-ratio:3/2;max-width:100%}
+.art svg{display:block;width:100%;height:100%}
+.ttl{position:absolute;top:4%;left:4%;right:4%}
+.ttl h2{font-size:clamp(34px,6.5vw,70px);line-height:1.05;color:#fff;text-shadow:0 3px 0 var(--m),0 -3px 0 var(--m),3px 0 0 var(--m),-3px 0 0 var(--m),2px 2px 0 var(--m),-2px 2px 0 var(--m),2px -2px 0 var(--m),-2px -2px 0 var(--m),0 6px 0 rgba(0,0,0,.25)}
+.ttl .line{display:inline-block;margin-top:6px;background:var(--m);color:#fff;font:700 clamp(12px,1.6vw,17px)/1.25 var(--head);text-transform:uppercase;letter-spacing:.05em;padding:5px 12px;border-radius:8px;max-width:100%}
+.side{display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{border-radius:16px;padding:16px 18px;position:relative;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.card h3{font-size:15px;margin-bottom:6px}
+.psalm{background:#fff;color:var(--ink)}
+.psalm h3{color:var(--m)}
+.psalm p{margin:0;font-weight:800;font-size:16px;line-height:1.45}
+.ref{display:block;margin-top:8px;font:700 13px var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--m)}
+.bubble{background:var(--a);color:var(--ink);flex:1}
+.bubble:before{content:"";position:absolute;left:-14px;top:26px;border-style:solid;border-width:9px 16px 9px 0;border-color:transparent var(--a) transparent transparent}
+.bubble p{margin:0;font-weight:800;font-size:19px;line-height:1.35}
+.act{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px;align-items:baseline;background:rgba(0,0,0,.14);border-radius:16px;padding:14px 18px}
+.act h3{font-size:17px;color:var(--a);white-space:nowrap}
+.act h3 span{color:#fff}
+.act p{margin:0;font-size:15.5px}
+.act .ref{display:inline;color:var(--a);margin:0 0 0 6px}
+/* calendar */
+.calhead{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px 20px;margin:34px 0 14px}
+.calhead h2{font-size:clamp(32px,5vw,48px);line-height:1}
+.calhead h2 span{color:var(--a)}
+.progress{display:flex;align-items:center;gap:10px;background:#fff;color:var(--ink);border-radius:999px;padding:6px 14px 6px 8px;font-weight:800;font-size:14px}
+.ring{width:30px;height:30px}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:10px;row-gap:22px}
+.dow{font:700 14px var(--head);text-transform:uppercase;letter-spacing:.07em;text-align:center;opacity:.95}
+.day{all:unset;box-sizing:border-box;cursor:pointer;background:#fff;color:var(--ink);border-radius:12px;position:relative;padding:22px 8px 8px;min-height:132px;display:flex;flex-direction:column;gap:6px;box-shadow:0 3px 0 rgba(0,0,0,.2);transition:transform .15s,box-shadow .15s;min-width:0}
+.day:hover{transform:translateY(-3px);box-shadow:0 7px 0 rgba(0,0,0,.18)}
+.day:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.day .n{position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:32px;height:32px;border-radius:50%;background:var(--a);color:var(--ink);font:700 15px/32px var(--head);text-align:center;box-shadow:0 0 0 3px #fff}
+.day .t{font-weight:800;font-size:11.5px;line-height:1.3;text-transform:uppercase;letter-spacing:.01em;text-align:center}
+.day .f{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.day .v{font:700 11.5px var(--head);letter-spacing:.04em;text-transform:uppercase;color:var(--m);min-width:0;overflow-wrap:anywhere}
+.day .box{flex:none;width:18px;height:18px;border:2px solid #aab1bd;border-radius:4px;display:grid;place-items:center}
+.day.done .box{background:#2e9d5b;border-color:#2e9d5b}
+.day.done .box:after{content:"";width:5px;height:9px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.day.special{background:#fff7dc;box-shadow:0 0 0 3px var(--a),0 3px 0 rgba(0,0,0,.2)}
+.day.today{box-shadow:0 0 0 4px #fff,0 0 0 7px var(--ink)}
+.day .tag{position:absolute;top:-12px;right:6px;background:var(--ink);color:#fff;font:700 10px/1 var(--head);letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;border-radius:6px}
+.blank{min-height:0}
+.foot{font:700 28px var(--script);text-align:center;margin-top:26px;opacity:.95}
+.credit{text-align:center;font-size:12.5px;opacity:.8;margin-top:6px;max-width:70ch;margin-inline:auto}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,14,25,.55);display:grid;place-items:center;padding:16px;z-index:20;animation:fade .2s}
+.sheet{background:#fff;color:var(--ink);border-radius:22px;width:min(560px,100%);max-height:calc(100% - 24px);overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.35);animation:pop .22s}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{transform:translateY(14px) scale(.98);opacity:0}}
+.sh-top{background:var(--m);color:#fff;padding:20px 22px 18px;position:relative}
+.sh-top .date{font:700 13px var(--head);letter-spacing:.1em;text-transform:uppercase;opacity:.9}
+.sh-top h2{font-size:clamp(22px,4.6vw,28px);line-height:1.2;margin-top:6px;text-transform:none;letter-spacing:.01em}
+.sh-top .hol{display:inline-block;margin-top:10px;background:var(--a);color:var(--ink);font:700 12px var(--head);letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:6px}
+.x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font:700 20px/36px var(--body);cursor:pointer}
+.sh-body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:16px}
+.verse{border-left:5px solid var(--a);background:#f6f4ef;border-radius:0 12px 12px 0;padding:14px 16px}
+.verse h3{font-size:16px;color:var(--m);display:flex;align-items:center;gap:8px}
+.verse p{margin:8px 0 0;font-family:Georgia,"Times New Roman",serif;font-size:17px;line-height:1.6;font-weight:400}
+.verse sup{font-family:var(--head);font-size:10px;color:var(--m);margin-right:2px}
+.verse small{display:block;margin-top:8px;font-size:12px;color:var(--soft-ink)}
+.prayed{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--m);color:#fff;font:700 17px var(--head);letter-spacing:.06em;text-transform:uppercase;padding:13px 16px;border-radius:14px;text-align:center}
+.prayed[aria-pressed="true"]{background:#2e9d5b}
+.prayed:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.sh-nav{display:flex;justify-content:space-between;gap:10px}
+.sh-nav button{all:unset;cursor:pointer;font:700 14px var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--m);padding:8px 10px;border-radius:10px;background:#eef0f4}
+.sh-nav button:focus-visible{outline:3px solid var(--a)}
+.sh-nav button[disabled]{opacity:.35;cursor:default}
+@media (max-width:900px){
+  .spread{grid-template-columns:minmax(0,1fr)}
+  .bubble:before{left:30px;top:-14px;border-width:0 9px 16px 9px;border-color:transparent transparent var(--a) transparent}
+  .act{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:860px){
+  .grid{grid-template-columns:minmax(0,1fr);row-gap:10px}
+  .dow,.blank{display:none}
+  .day{min-height:0;display:grid;grid-template-columns:46px minmax(0,1fr);grid-template-areas:"n wd" "n t" "n f";align-items:center;gap:2px 12px;padding:12px 14px}
+  .day .n{position:static;transform:none;grid-area:n;align-self:start;width:44px;height:44px;line-height:44px;font-size:18px;box-shadow:none}
+  .day .wd{display:block;grid-area:wd;font:700 11px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--soft-ink)}
+  .day .t{grid-area:t;text-align:left;font-size:13px}
+  .day .f{grid-area:f;margin-top:4px}
+  .day .tag{top:-8px}
+  .ttl .line{font-size:11px}
+}
+.day .wd{display:none}
+@media (max-width:860px){.day .wd{display:block}}
+.devo{display:block;width:max-content;max-width:100%;margin-top:6px;background:#fff;color:var(--m);font:700 clamp(11px,1.4vw,14px)/1.2 var(--head);text-transform:uppercase;letter-spacing:.05em;padding:4px 10px;border-radius:6px}
+.prayer{grid-column:1/-1;background:#fff;color:var(--ink);display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 18px;align-items:baseline}
+.prayer h3{grid-column:1/-1;color:var(--m);font-size:14px}
+.prayer b{font:700 20px var(--head);text-transform:uppercase;letter-spacing:.02em}
+.prayer p{margin:0;font-weight:800;font-size:16px;line-height:1.45}
+.day .lb{font:700 10.5px/1.15 var(--head);letter-spacing:.06em;text-transform:uppercase;color:#a0451f;text-align:center}
+.day .lb.hol{color:#fff;background:#b5303a;border-radius:4px;padding:2px 5px;align-self:center}
+.day.sun .lb{color:var(--m)}
+.sh-top .hol.hd{background:#b5303a;color:#fff;margin-left:6px}
+@media (max-width:860px){.prayer{grid-template-columns:minmax(0,1fr)} .day .lb{grid-area:lb;text-align:left;justify-self:start} .day{grid-template-areas:"n wd" "n lb" "n t" "n f"}}
+.day .lit{position:absolute;left:12px;right:12px;top:0;height:4px;border-radius:0 0 4px 4px;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.18)}
+.psalm .pref{font:700 28px/1.05 var(--head);text-transform:uppercase;letter-spacing:.02em}
+.psalm .how{font-weight:600;font-size:14px;color:var(--soft-ink);margin:6px 0 10px}
+.lnk{display:inline-block;font:700 13px var(--head);letter-spacing:.05em;text-transform:uppercase;color:var(--m);background:#eef0f4;border-radius:10px;padding:7px 11px;text-decoration:none}
+.lnk:hover{background:#e2e6ee}.lnk:focus-visible{outline:3px solid var(--a)}
+.form{background:#fff;color:var(--ink);display:flex;gap:14px;align-items:flex-start}
+.form .fi{flex:none;background:#f3efe6;border-radius:14px;padding:6px}
+.form h3{color:var(--m);font-size:13px;margin-bottom:2px}
+.form b{display:block;font:700 19px/1.15 var(--head);text-transform:uppercase;margin-bottom:4px}
+.form p{margin:0;font-weight:600;font-size:15px;line-height:1.45}
+.form .ref{margin-top:6px}
+.bubble{flex:none}
+.litday{display:flex;align-items:center;gap:8px;font:700 13px var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--soft-ink)}
+.litday i{width:14px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.verse .vhint{font-family:var(--body);font-size:15px;line-height:1.5;font-weight:600;color:var(--ink)}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.top-btns{display:flex;gap:8px;flex-wrap:wrap}
+.today-btn.ghost{background:#fff;color:var(--m)}
+.prayed.alt{background:var(--a);color:var(--ink)}
+#rosary{color:var(--ink)}
+.ro-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:14px 24px;margin-bottom:18px;color:#fff}
+.ro-head h2{font-size:clamp(30px,5vw,46px);line-height:1}
+.ro-head p{margin:4px 0 0;font-weight:800;opacity:.9}
+.ro-sets{display:flex;flex-wrap:wrap;gap:8px}
+.ro-sets button{all:unset;box-sizing:border-box;cursor:pointer;background:#fff;border-radius:12px;padding:8px 12px;border-left:6px solid var(--sc);display:flex;flex-direction:column;min-width:120px}
+.ro-sets button b{font:700 15px var(--head);text-transform:uppercase;letter-spacing:.04em;color:var(--ink)}
+.ro-sets button span{font-size:12px;color:var(--soft-ink)}
+.ro-sets button[aria-selected="true"]{background:var(--sc)}.ro-sets button[aria-selected="true"] b,.ro-sets button[aria-selected="true"] span{color:#fff}
+.ro-sets button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.ro-grid{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start}
+.ro-beads{background:#fff;border-radius:18px;padding:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.rosary-svg{display:block;width:100%;height:auto;max-height:72vh;margin:0 auto}
+.rosary-svg .bead{cursor:pointer;fill:#cfe0f5;stroke:#4a7fc4;stroke-width:1.4;transition:fill .15s}
+.rosary-svg .bead.big{fill:#4a7fc4;stroke:#22305e}
+.rosary-svg .bead.done{fill:#e8d7a8;stroke:#a88a4a}
+.rosary-svg .bead.cur{fill:#f2a541;stroke:#b5303a;stroke-width:2.5;filter:drop-shadow(0 0 5px rgba(242,165,65,.9))}
+.rosary-svg .crossb{fill:#8a5a2b;stroke:none}.rosary-svg .crossb.cur rect{fill:#f2a541}.rosary-svg .crossb.done rect{fill:#c9a46b}
+.rosary-svg .medal.cur path{fill:#f2a541}
+.rosary-svg [data-bead]:focus-visible{outline:none;stroke:#b5303a;stroke-width:3}
+.ro-prog{height:8px;background:#eef0f4;border-radius:99px;overflow:hidden;margin-top:10px}#ro-bar{height:100%;background:#2e9d5b;width:0;transition:width .2s}
+.ro-count{margin:6px 0 0;text-align:center;font:700 13px var(--head);letter-spacing:.06em;text-transform:uppercase;color:var(--soft-ink)}
+.ro-main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.ro-step{background:#fff;min-height:220px}
+.ro-where{font:700 13px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--m);margin-bottom:6px}
+.ro-step h3{font-size:22px;margin:10px 0 4px;color:var(--ink)}
+.ro-step p{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:19px;line-height:1.6}
+.ro-ctl{display:flex;gap:10px}
+.ro-ctl button{all:unset;box-sizing:border-box;cursor:pointer;flex:1;text-align:center;font:700 17px var(--head);letter-spacing:.06em;text-transform:uppercase;padding:14px;border-radius:14px;background:#fff;color:var(--m)}
+.ro-ctl button.pri{background:var(--a);color:var(--ink);flex:2}
+.ro-ctl button[disabled]{opacity:.45;cursor:default}
+.ro-ctl button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.ro-myst{background:#fff}
+.ro-myst h3{font-size:20px}
+.ro-days{margin:2px 0 8px;font-size:13px;color:var(--soft-ink)}
+.ro-myst ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:m}
+.ro-myst li{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:12px;padding:8px 10px;background:#f6f4ef;counter-increment:m}
+.ro-myst li.on{background:#fff3d6;box-shadow:inset 0 0 0 2px var(--a)}
+.ro-myst li button{all:unset;cursor:pointer;display:flex;flex-direction:column;min-width:0}
+.ro-myst li button b:before{content:counter(m) ". "}
+.ro-myst li button b{font-size:15px}
+.ro-myst li button span{font-size:12.5px;color:var(--soft-ink)}
+.ro-myst li button:focus-visible{outline:3px solid var(--a)}
+.ro-myst li a{flex:none;font:700 12px var(--head);letter-spacing:.04em;color:var(--m);text-decoration:none;text-transform:uppercase}
+@media (max-width:800px){.ro-grid{grid-template-columns:minmax(0,1fr)}.ro-beads{position:static}.rosary-svg{max-height:52vh}.ro-step p{font-size:17px}}
+[hidden]{display:none!important}
+body{margin:0}
+*{box-sizing:border-box}
+body{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cpath d='M30 14h4v10h8v4h-8v18h-4V28h-8v-4h8z' fill='%23ffffff' fill-opacity='.05'/%3E%3C/svg%3E")}
+.family{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:20px;align-items:center;background:rgba(255,255,255,.1);border-radius:20px;padding:18px 20px;margin-bottom:20px}
+.fam-text h2{font-size:clamp(26px,4vw,36px);line-height:1}
+.motto{margin:8px 0 6px;font:700 22px/1.25 var(--script)}
+.motto span{display:block;font:700 11px var(--head);letter-spacing:.08em;text-transform:uppercase;opacity:.8;margin-top:2px}
+.fprayer{margin:0;font-size:14.5px;line-height:1.5;opacity:.95}
+.fam-photos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:8px 4px 12px}
+.pol{flex:none;margin:0;background:#fff;padding:8px 8px 6px;border-radius:6px;box-shadow:0 6px 14px rgba(0,0,0,.25);min-width:0;scroll-snap-align:start}
+.pol img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:3px}
+.pol figcaption{font:700 18px/1.1 var(--script);color:var(--ink);text-align:center;padding-top:6px}
+.fam-photos .t0{transform:rotate(-3deg)}.fam-photos .t1{transform:rotate(2deg)}.fam-photos .t2{transform:rotate(-1.5deg)}.fam-photos .t3{transform:rotate(3deg)}
+.famcard{background:#fff;color:var(--ink)}
+.famcard h3{color:var(--m);font-size:14px;margin-bottom:8px}
+.famcard .pol{width:100%;box-shadow:none;padding:0;transform:rotate(-1.5deg)}
+@media (max-width:860px){.family{grid-template-columns:minmax(0,1fr)}.fam-photos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}.fam-photos .pol{width:150px}}
+.today-btn.install{background:#2e9d5b;color:#fff}
+.ios-tip{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));background:#fff;color:#1f2430;border-radius:14px;padding:12px 44px 12px 14px;box-shadow:0 8px 30px rgba(0,0,0,.35);font-size:14px;z-index:30}
+.ios-tip b{font-family:var(--head);text-transform:uppercase;letter-spacing:.04em}
+.ios-tip button{all:unset;position:absolute;top:8px;right:10px;font-size:22px;cursor:pointer;padding:2px 8px}
+</style>
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Catholic Family Prayer Calendar</h1><p>The Our Father through the Church year · Oct 2026 – Dec 2027</p></div>
+    <div class="top-btns"><button class="today-btn install" id="install-btn" type="button" hidden>Install app</button><button class="today-btn ghost" id="ro-btn" type="button" aria-pressed="false">Pray the Rosary</button><button class="today-btn" id="today-btn" type="button">Today's prayer</button></div>
+  </header>
+  <section class="family" id="family" aria-label="Our family"></section>
+  <nav class="months" id="months" aria-label="Months"></nav>
+  <main id="main"></main>
+  <section id="rosary" hidden aria-label="The Holy Rosary"></section>
+  <div class="foot">One prayer a day</div>
+  <p class="credit">Tap any day to see its prayer, open the verse in the New American Bible (the Catholic Bible used in the U.S. Lectionary), and read that day's Mass readings on the U.S. bishops' website. Feasts, seasons and colors follow the Roman Missal calendar for the United States. Ascension is shown on Thursday, May 6, as kept in the Boston province; many U.S. dioceses celebrate it on Sunday, May 9. Your ticks are saved on this device only.</p>
+</div>
+<script>
+const CAL=[{"name":"October","year":2026,"key":"oct26","color":"#3c4f6b","accent":"#f2a541","line":"But deliver us from evil","psalm":{"ref":"Psalm 91:2"},"question":"What helps you feel brave when you are afraid?","activity":{"title":"Brave Box","text":"Each person writes a worry on a card and puts it in a small box. Pray over the box together every Sunday. At the end of the month, open it and talk about how God helped with each worry.","ref":"Psalm 56:4"},"devotion":"The Holy Rosary","prayer":{"name":"Guardian Angel Prayer","text":"Angel of God, my guardian dear, to whom God's love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen."},"days":[["St. Thérèse of Lisieux: do one small thing with great love today.","Matthew 18:3","St. Thérèse",false],["Guardian Angels: pray the Guardian Angel Prayer together.","Psalm 91:11","Guardian Angels",false],["Ask God to keep your family safe this weekend.","Psalm 4:9","",false],["Thank God that the Lord is your shepherd.","Psalm 23:4","",false],["Ask God to help you stay away from things that harm you.","Proverbs 4:14–15","",false],["Read how Jesus said no to the devil.","Luke 4:1–13","",false],["Our Lady of the Rosary: pray one decade of the Rosary together.","Luke 1:28","Our Lady of the Rosary",false],["Thank God that He is never far away.","Acts 17:27","",false],["Ask God to help you be brave at school.","2 Timothy 1:7","",false],["Read how God kept Paul safe in a shipwreck.","Acts 27:22–25","",false],["Thank Jesus, the Good Shepherd who protects His sheep.","John 10:11","",false],["Pray for police officers, firefighters, and rescuers.","Romans 13:4","",false],["Ask God to help you choose good friends.","1 Corinthians 15:33","",false],["Thank God that He is your light in the dark.","Psalm 27:1","",false],["St. Teresa of Ávila: tell God, \"You are enough for me.\"","Isaiah 26:3","St. Teresa of Ávila",false],["Read how Elisha saw God's army of angels.","2 Kings 6:16–17","",false],["Ask God to protect people who are traveling today.","Psalm 121:8","",false],["Thank God for your church, a safe place to grow.","Psalm 92:14","",false],["Ask God to help you not repay evil with evil.","Romans 12:17","",false],["Pray for people facing storms or floods.","Isaiah 43:2","",false],["Thank God that His love makes you more than a conqueror.","Romans 8:37","",false],["St. John Paul II said \"Be not afraid!\" Ask God for courage.","Matthew 14:27","St. John Paul II",false],["Read how Jesus walked on the water to His friends.","Matthew 14:27","",false],["Thank God that He keeps you from falling.","Jude 1:24","",false],["Ask God to make your home a safe and kind place.","Proverbs 14:26","",false],["Pray for kids who don't feel safe at home.","Psalm 27:10","",false],["Thank God that He keeps His children safe from the evil one.","1 John 5:18","",false],["Ask God to help you trust Him when you can't see the way.","Proverbs 3:5","",false],["Tell God about a time He rescued you.","Psalm 18:20","",false],["Thank Jesus for beating evil on the cross.","Colossians 2:15","",false],["Thank God that Jesus' light is stronger than any darkness.","John 8:12","",false]]},{"name":"November","year":2026,"key":"nov26","color":"#9a5a1f","accent":"#f6d06b","line":"For the kingdom, the power and the glory are yours","psalm":{"ref":"Psalm 145:3"},"question":"Where have you seen God's power this year?","activity":{"title":"Thank-You Tablecloth","text":"Lay a plain paper or old cloth tablecloth on the table. All month, everyone writes or draws things they thank God for. Use it for your Thanksgiving meal and read it together.","ref":"Psalm 100:4"},"devotion":"The Holy Souls in Purgatory","prayer":{"name":"Eternal Rest","text":"Eternal rest grant unto them, O Lord, and let perpetual light shine upon them. May they rest in peace. Amen."},"days":[["All Saints Day: ask your patron saint to pray for you.","Hebrews 12:1","All Saints",true],["All Souls Day: pray for family members who have died.","Wisdom 3:1","All Souls",false],["Pray for wise leaders in your town and country.","Proverbs 21:1","",false],["Praise God that He holds all things together.","Colossians 1:17","",false],["Thank God for the colors of autumn.","Psalm 104:24","",false],["Praise God that His glory is brighter than the sun.","Isaiah 60:19","",false],["Thank God for a friend who helps you.","Proverbs 18:24","",false],["Sing a praise song together.","Psalm 150:6","",false],["Praise God for Jesus' power to heal.","Matthew 4:23","",false],["Thank God for the food on your table.","Psalm 145:16","",false],["St. Martin shared his cloak. Pray for veterans and share something warm.","Matthew 25:36","Veterans Day · St. Martin",false],["Praise God that He never changes.","Malachi 3:6","",false],["Thank God for your teachers.","Proverbs 1:5","",false],["Praise God for the power that raised Jesus from the dead.","Ephesians 1:19–20","",false],["Thank God for your pastor and church leaders.","1 Thessalonians 5:12","",false],["Praise God that every knee will bow to Jesus.","Philippians 2:10–11","",false],["Thank God for a warm home as the weather turns cold.","Psalm 147:16","",false],["Pray for people who will be alone at Thanksgiving.","Psalm 68:7","",false],["Praise God that His kingdom will never end.","Luke 1:33","",false],["Thank God for a meal you shared with family.","Acts 2:46","",false],["Praise God for His glory in all He made.","Romans 1:20","",false],["Christ the King: name Jesus the King of your home.","Revelation 19:16","Christ the King",false],["Ask God to give you a thankful heart this week.","Colossians 3:15","",false],["Pray for everyone cooking and traveling this week.","Colossians 3:17","",false],["Write a thank-you note to someone.","1 Thessalonians 1:2","",false],["Thanksgiving! Take turns thanking God at the table.","Psalm 118:1","Thanksgiving",false],["Share some of your leftovers with someone.","Deuteronomy 15:11","",false],["Praise God that He gives strength to the tired.","Isaiah 40:29","",false],["First Sunday of Advent: light the first purple candle.","Romans 13:11–12","Advent begins",false],["St. Andrew brought his brother to Jesus. Invite someone to Mass.","John 1:41","St. Andrew",false]]},{"name":"December","year":2026,"key":"dec26","color":"#22305e","accent":"#f4c95d","line":"Amen","psalm":{"ref":"Psalm 98:3"},"question":"Which of God's promises are you most thankful for?","activity":{"title":"Kindness Star","text":"Cut a big paper star and hang it on a wall. Each time someone in the family does a kind act, add a sticker or a gold dot. On Christmas Eve, put the star by the nativity or on the tree.","ref":"Matthew 2:10"},"devotion":"Advent and the Immaculate Conception","prayer":{"name":"Hail Mary","text":"Hail Mary, full of grace, the Lord is with thee. Blessed art thou amongst women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen."},"days":[["Thank God that all His promises are \"yes\" in Jesus.","2 Corinthians 1:20","",false],["Read God's first promise of a Rescuer.","Genesis 3:15","",false],["Thank God for the rainbow promise to Noah.","Genesis 9:13","",false],["Pray for families getting ready for Christmas.","Psalm 127:1","",false],["St. Nicholas Eve: leave your shoes out and plan a secret kindness.","Matthew 6:3–4","St. Nicholas Eve",false],["Second Sunday of Advent: light the second purple candle.","Isaiah 40:3","Advent",false],["Thank God for hearing Elizabeth's prayer.","Luke 1:25","",false],["Immaculate Conception: go to Mass and pray a Hail Mary together.","Luke 1:28","Immaculate Conception",true],["Ask God to help you say \"yes\" to Him like Mary.","Luke 1:38","",false],["Thank God that Jesus is called Immanuel.","Isaiah 7:14","",false],["Make a card for someone who is lonely.","1 Thessalonians 5:11","",false],["Our Lady of Guadalupe: thank Mary for being a mother to us all.","Luke 1:48","Our Lady of Guadalupe",false],["Gaudete Sunday: light the rose candle and rejoice!","Philippians 4:4","Gaudete Sunday",false],["Thank God for Mary's song of praise.","Luke 1:46–47","",false],["Pray for people who are sick this Christmas.","Isaiah 53:4","",false],["Read about the long road to Bethlehem.","Luke 2:4–5","",false],["Thank God that Jesus was born in a humble manger.","Luke 2:7","",false],["Give a toy or a coat to a child in need.","1 John 3:17","",false],["Thank God for the shepherds who hurried to see Jesus.","Luke 2:15–16","",false],["Fourth Sunday of Advent: light all four candles.","Matthew 1:23","Advent",false],["Ask God to make your heart a home for Jesus.","Ephesians 3:17","",false],["Thank God for the star that led the wise men.","Matthew 2:2","",false],["Pray for people traveling home for Christmas.","Psalm 139:3","",false],["Christmas Eve: read the Christmas story together.","Luke 2:1–20","Christmas Eve",false],["Merry Christmas! Go to Mass and welcome Jesus, born for us.","Luke 2:10–11","Christmas",true],["St. Stephen: pray for Christians who suffer for their faith.","Acts 7:59–60","St. Stephen",false],["Holy Family: thank God for your family and bless each person.","Luke 2:51–52","Holy Family",false],["Holy Innocents: pray for babies and children everywhere.","Mark 10:14","Holy Innocents",false],["Thank God for keeping your family through 2026.","Lamentations 3:22–23","",false],["Ask God to guide you into 2027.","Isaiah 58:11","",false],["Say \"Amen!\" and thank God for a whole year with Him.","Revelation 22:21","",false]]},{"name":"January","year":2027,"key":"jan27","color":"#2f5d8a","accent":"#e85d3f","line":"Our Father","psalm":{"ref":"Psalm 68:6"},"question":"What makes a good father, and how is God the best Father of all?","activity":{"title":"Blessing Night","text":"Pick one evening to speak a blessing over each other. Parents bless each child by name, then the kids bless their parents. Write the blessings down and keep them.","ref":"Numbers 6:24–26"},"devotion":"The Holy Name of Jesus","prayer":{"name":"Sign of the Cross","text":"In the name of the Father, and of the Son, and of the Holy Spirit. Amen."},"days":[["Mary, Mother of God: start the year at Mass and ask Mary to pray for you.","Luke 2:19","Mary, Mother of God",true],["Ask God to guide your family this year.","Proverbs 3:5–6","",false],["Epiphany: bless your front door with chalk: 20 + C + M + B + 27.","Matthew 2:11","Epiphany",false],["Tell God one thing you love about your family.","Psalm 127:3","",false],["Ask God to help you listen to your parents.","Ephesians 6:1","",false],["Thank God that He knows everything you need.","Matthew 6:8","",false],["Tell God about a time you felt safe.","Psalm 4:9","",false],["Pray for kids who don't have a dad at home.","Psalm 10:14","",false],["Thank God for a grandparent or older friend.","Proverbs 17:6","",false],["Baptism of the Lord: look at baptism photos and thank God you are His child.","Matthew 3:17","Baptism of the Lord",false],["Tell God what you'd ask Him if He sat right here.","Matthew 7:7","",false],["Thank God that He never gets tired of you.","Isaiah 40:28","",false],["Pray for your mom, dad, or whoever cares for you.","Exodus 20:12","",false],["Tell God about something hard right now.","1 Peter 5:7","",false],["Thank God that He runs to welcome us home.","Luke 15:20","",false],["Ask God to help you be patient with others.","Ephesians 4:2","",false],["Thank God for loving you enough to correct you.","Proverbs 3:12","",false],["Draw your family and pray for each person.","Philippians 1:3","",false],["Thank God for snow, rain, and winter days.","Job 37:6","",false],["Ask God to help you trust Him like a child.","Matthew 18:3","",false],["Thank God that He always keeps His promises.","Numbers 23:19","",false],["Day of prayer for unborn children: pray for every baby and every mother.","Psalm 139:13","Day of Prayer for Life",false],["Thank God that nothing can snatch you from His hand.","John 10:28–29","",false],["Ask God to make you more like Jesus.","Romans 8:29","",false],["Conversion of St. Paul: pray for someone to come to know Jesus.","Acts 9:4–5","Conversion of St. Paul",false],["Thank God that He answers when you call.","Jeremiah 33:3","",false],["Pray for the families in your church.","Galatians 6:10","",false],["Ask God to help you obey right away.","John 14:15","",false],["Thank God for every good gift.","James 1:17","",false],["Ask God to help you forgive someone at home.","Mark 11:25","",false],["Pray the Our Father slowly together, thinking about each word.","Matthew 6:9","",false]]},{"name":"February","year":2027,"key":"feb27","color":"#24346b","accent":"#f2b84b","line":"Who art in heaven","psalm":{"ref":"Psalm 19:2"},"question":"If you could ask God one question about heaven, what would it be?","activity":{"title":"Stargazing Prayer Night","text":"On a clear night, bundle up and look at the sky together. Take turns thanking God for something He made, then talk about how big He must be to make it all.","ref":"Psalm 8:4–5"},"devotion":"The Holy Family","prayer":{"name":"Glory Be","text":"Glory be to the Father, and to the Son, and to the Holy Spirit, as it was in the beginning, is now, and ever shall be, world without end. Amen."},"days":[["Look at the sky and thank God for making it.","Genesis 1:1","",false],["Presentation of the Lord: bring candles to be blessed. Jesus is our light.","Luke 2:32","Candlemas",false],["St. Blaise: pray for good health and get your throat blessed.","Sirach 38:9","St. Blaise",false],["Ask God to help you think about things above.","Colossians 3:2","",false],["Thank God for the sun that warms the earth.","Psalm 74:16","",false],["Draw some stars. God knows each one by name!","Psalm 147:4","",false],["Pray for someone who is sad today.","Matthew 5:4","",false],["Thank Jesus for preparing a place for you.","John 14:2","",false],["Thank God for the angels who watch over you.","Psalm 91:11","",false],["Ash Wednesday: receive ashes and choose your Lenten promise.","Joel 2:12","Ash Wednesday",false],["Our Lady of Lourdes: pray for people who are sick.","James 5:14","Our Lady of Lourdes",false],["Friday of Lent: no meat today. Pray the Stations of the Cross.","Luke 9:23","Lent",false],["Thank God for the people who love you.","1 John 4:7","",false],["Tell God who you love and why.","1 Corinthians 13:4","",false],["Ask God to help you store up treasure in heaven.","Matthew 6:20","",false],["Thank God that heaven has no more tears.","Revelation 21:4","",false],["Ask God to help you live as a citizen of heaven.","Philippians 3:20","",false],["Tell God about a beautiful place you've seen.","Psalm 24:1","",false],["Friday of Lent: give up a treat and give to the poor instead.","Tobit 12:8","Lent",false],["Thank God that we will be with Him forever.","1 Thessalonians 4:17","",false],["Ask God to help you not worry about tomorrow.","Matthew 6:34","",false],["Chair of St. Peter: pray for the Pope.","Matthew 16:18","Chair of St. Peter",false],["Tell God one way you can be kind today.","Matthew 5:16","",false],["Thank God that your name is written in heaven.","Luke 10:20","",false],["Ask God to help you see others the way He does.","1 Samuel 16:7","",false],["Friday of Lent: no meat today. Pray the Stations of the Cross.","Luke 9:23","Lent",false],["Sing a song to God together.","Psalm 96:1","",false],["Thank God for every heavenly blessing.","Ephesians 1:3","",false]]},{"name":"March","year":2027,"key":"mar27","color":"#3f7d4e","accent":"#f2c14e","line":"Hallowed be thy name","psalm":{"ref":"Psalm 8:2"},"question":"Which name for God is your favorite, and why?","activity":{"title":"Names of God Jar","text":"Write names of God on slips of paper (Shepherd, Rock, Provider, Light…) and put them in a jar. At dinner, draw one and talk about what it tells you about Him.","ref":"Proverbs 18:10"},"devotion":"St. Joseph","prayer":{"name":"Jesus, Mary and Joseph","text":"Jesus, Mary and Joseph, I give you my heart and my soul."},"days":[["Thank God that His name is holy.","Psalm 99:3","",false],["Learn the name \"The Lord Will Provide.\"","Genesis 22:14","",false],["Ask God to help you say His name with respect.","Exodus 20:7","",false],["Learn the name \"Rock\" and thank God for being strong.","Psalm 18:3","",false],["Friday of Lent: pray the Sorrowful Mysteries of the Rosary.","Isaiah 53:5","Lent",false],["Learn the name \"Immanuel\": God with us.","Matthew 1:23","",false],["Praise God by singing His name.","Psalm 9:3","",false],["Learn the name \"Light of the World.\"","John 8:12","",false],["Ask God to help your words honor Him.","Psalm 19:15","",false],["Learn the name \"Good Shepherd.\"","John 10:11","",false],["Thank God that His name is a safe place.","Proverbs 18:10","",false],["Friday of Lent: go to Confession as a family this week.","1 John 1:9","Lent",false],["Pray for someone who doesn't know God yet.","Romans 10:13","",false],["Learn the name \"Bread of Life.\"","John 6:35","",false],["Ask God to help you live in a way that honors Him.","Colossians 3:17","",false],["Learn the name \"The Lord Who Heals.\"","Exodus 15:26","",false],["Thank God that He calls you by name.","Isaiah 43:1","",false],["Learn the name \"Alpha and Omega.\"","Revelation 22:13","",false],["St. Joseph: ask St. Joseph to watch over your family.","Matthew 1:24","St. Joseph",false],["Thank God for someone whose name you love.","Ephesians 1:16","",false],["Palm Sunday: bring home a blessed palm and shout \"Hosanna!\"","Matthew 21:9","Palm Sunday",false],["Learn the name \"The Way, the Truth, and the Life.\"","John 14:6","",false],["Ask God to help you be honest, because He is truth.","Ephesians 4:25","",false],["Learn the name \"The Lord My Banner.\"","Exodus 17:15","",false],["Holy Thursday: Jesus gave us the Eucharist. Wash each other's feet.","John 13:14–15","Holy Thursday",false],["Good Friday: fast, and pray at 3 o'clock, the hour Jesus died.","John 19:30","Good Friday",false],["Holy Saturday: wait in quiet prayer. Go to the Easter Vigil if you can.","Lamentations 3:26","Holy Saturday",false],["Easter Sunday! He is risen! Alleluia!","Matthew 28:6","Easter",false],["Learn the name \"The Resurrection and the Life.\"","John 11:25","",false],["Thank God that Jesus' name is above every name.","Philippians 2:9","",false],["Learn the name \"Faithful and True.\"","Revelation 19:11","",false]]},{"name":"April","year":2027,"key":"apr27","color":"#7a4a9e","accent":"#f28c6b","line":"Thy kingdom come","psalm":{"ref":"Psalm 103:19"},"question":"What would our neighborhood look like if everyone lived God's way?","activity":{"title":"Kingdom Helpers","text":"Choose one service project to do together: rake a neighbor's yard, collect food for a pantry, or visit someone who lives alone. Afterward, talk about where you saw God's kingdom at work.","ref":"Matthew 25:40"},"devotion":"The Holy Eucharist","prayer":{"name":"O Sacrament Most Holy","text":"O Sacrament most holy, O Sacrament divine, all praise and all thanksgiving be every moment thine."},"days":[["Thank Jesus that He is King forever.","Revelation 11:15","",false],["Ask God to show you someone to help today.","Galatians 6:2","",false],["Tell God what His kingdom could look like at home.","Romans 14:17","",false],["Divine Mercy Sunday: pray \"Jesus, I trust in You.\"","Psalm 136:1","Divine Mercy",false],["Annunciation: pray the Angelus and say yes to God like Mary.","Luke 1:38","Annunciation",false],["Ask God to help you share with others.","Acts 20:35","",false],["Pray for the leaders of your country.","1 Timothy 2:1–2","",false],["Thank God that His kingdom belongs to children too.","Mark 10:14","",false],["Ask God to make you a humble servant.","Mark 10:45","",false],["Tell God about someone who shows His love well.","John 13:35","",false],["Pray for kids around the world who are hungry.","Isaiah 58:10","",false],["Thank God for your church family.","Hebrews 10:24–25","",false],["Ask God to help you seek Him first.","Matthew 6:33","",false],["Do a secret chore for someone and tell only God.","Matthew 6:3–4","",false],["Thank God that one day all things will be new.","Revelation 21:5","",false],["Pray for someone who is treated unfairly.","Proverbs 31:8–9","",false],["Ask God to help you be a peacemaker.","Matthew 5:9","",false],["Tell God what you treasure most.","Matthew 13:44","",false],["Thank God for teachers, doctors, and helpers.","Romans 12:6–8","",false],["Pray for a country far away.","Matthew 28:19","",false],["Ask God to help you welcome new kids.","Romans 15:7","",false],["Thank God for His creation and take care of it.","Genesis 2:15","",false],["Ask God how you can shine His light at school.","Matthew 5:14","",false],["Thank God that Jesus will come again as King.","Revelation 22:20","",false],["Pray for people who feel forgotten.","Isaiah 49:15","",false],["Ask God to help you be a cheerful giver.","2 Corinthians 9:7","",false],["Thank God for the good news of Jesus.","Mark 1:15","",false],["Tell God one way your family can serve together.","Joshua 24:15","",false],["Pray for someone who is sick.","James 5:16","",false],["Pray \"Thy kingdom come\" and ask Jesus to rule your heart.","Matthew 6:10","",false]]},{"name":"May","year":2027,"key":"may27","color":"#c4553a","accent":"#7cb07a","line":"Thy will be done on earth as it is in heaven","psalm":{"ref":"Psalm 40:9"},"question":"Is it hard to do what God wants when you'd rather do something else? What helps?","activity":{"title":"Cheerful Yes Month","text":"Each person picks one thing to do cheerfully all month without being asked twice: a chore, a kind habit, or being on time. Cheer each other on at the end of every week.","ref":"Philippians 2:14"},"devotion":"The Blessed Virgin Mary","prayer":{"name":"Hail Mary","text":"Hail Mary, full of grace, the Lord is with thee. Blessed art thou amongst women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen."},"days":[["St. Joseph the Worker: thank God for work, and help with a chore.","Colossians 3:23","St. Joseph the Worker",false],["Mary's month begins: make a small May altar with flowers.","Luke 1:46–47","May Crowning",false],["Tell God about a choice you need to make.","James 1:5","",false],["Ask God to help you obey even when it's hard.","Luke 22:42","",false],["Thank God for springtime and new life.","Song of Songs 2:11–12","",false],["Ascension of the Lord: Jesus returns to the Father in heaven.","Acts 1:9–11","Ascension",true],["Ask God to help you do your chores cheerfully.","Colossians 3:23","",false],["Pray for someone making a big decision.","Proverbs 16:9","",false],["Mother's Day: pray for your mom and ask Mary to bless her.","Proverbs 31:28","Mother's Day",false],["Ask God to help you be thankful in everything.","1 Thessalonians 5:18","",false],["Tell God one thing you think He wants you to do.","Micah 6:8","",false],["Thank God that He works all things for good.","Romans 8:28","",false],["Our Lady of Fatima: pray a Rosary for peace in the world.","Luke 1:28","Our Lady of Fatima",false],["Pray for your teachers.","1 Thessalonians 5:12–13","",false],["Ask God to help you do right when no one is looking.","Proverbs 15:3","",false],["Pentecost: ask the Holy Spirit to fill your heart.","Acts 2:4","Pentecost",false],["Ask the Holy Spirit to help you pray.","Romans 8:26","",false],["Tell God about something you're waiting for.","Psalm 27:14","",false],["Thank God for people who help you grow.","Proverbs 27:17","",false],["Ask God to help you say yes to Him like Mary did.","Luke 1:38","",false],["Pray for kids finishing the school year.","Philippians 4:13","",false],["Thank God for His Word that lights your path.","Psalm 119:105","",false],["Holy Trinity: make the Sign of the Cross slowly and carefully.","Matthew 28:19","Holy Trinity",false],["Tell God about something that makes you nervous.","Joshua 1:9","",false],["Thank God that He is the potter and you are the clay.","Isaiah 64:7","",false],["Ask God to help you love others like Jesus does.","John 13:34","",false],["Pray for someone who is far from home.","Psalm 139:9–10","",false],["Thank God for the gifts He put inside you.","1 Peter 4:10","",false],["Ask God to help you be a good friend.","Proverbs 17:17","",false],["Body and Blood of Christ: thank Jesus for coming to you in the Eucharist.","John 6:51","Corpus Christi",false],["Memorial Day: pray for those who gave their lives for others.","John 15:13","Memorial Day · Visitation",false]]},{"name":"June","year":2027,"key":"jun27","color":"#d08a1e","accent":"#3f7d4e","line":"Give us this day our daily bread","psalm":{"ref":"Psalm 145:15"},"question":"What everyday things does God give us that we forget to notice?","activity":{"title":"Bake and Share","text":"Bake a loaf of bread or a batch of muffins together. Keep half and give half to a neighbor. At each meal this month, take turns praying a new kind of thank-you.","ref":"John 6:35"},"devotion":"The Sacred Heart of Jesus","prayer":{"name":"Grace Before Meals","text":"Bless us, O Lord, and these thy gifts, which we are about to receive from thy bounty, through Christ our Lord. Amen."},"days":[["Thank God for breakfast this morning.","Psalm 136:25","",false],["Ask God to give your family what you need today.","Philippians 4:19","",false],["Thank God for farmers who grow your food.","Psalm 104:14","",false],["Sacred Heart of Jesus: give your family to Jesus' loving heart.","Matthew 11:29","Sacred Heart",false],["Immaculate Heart of Mary: ask Mary to help you love like Jesus.","Luke 2:51","Immaculate Heart",false],["Thank Jesus for being the Bread of Life.","John 6:35","",false],["Tell God your favorite meal and thank Him for it.","1 Timothy 4:4","",false],["Ask God to help you not grumble about food.","Philippians 2:14","",false],["Thank God for the manna He sent from heaven.","Exodus 16:4","",false],["Pray for people who work hard for their families.","Psalm 128:2","",false],["Share a snack with someone today.","Luke 3:11","",false],["Thank God that Jesus fed 5,000 with one boy's lunch.","John 6:9–11","",false],["Tell God what you need today, big or small.","Matthew 6:11","",false],["Thank God for the work that pays for your home.","Deuteronomy 8:18","",false],["Ask God to help you be happy with what you have.","Hebrews 13:5","",false],["Pray for a neighbor who could use a meal.","Hebrews 13:16","",false],["Thank God for His Word, which feeds your heart.","Matthew 4:4","",false],["Ask God to help you trust Him for tomorrow.","Psalm 37:25","",false],["Thank God for the birds He feeds every day.","Matthew 6:26","",false],["Father's Day: pray for your dad and ask St. Joseph to bless him.","Proverbs 20:7","Father's Day",false],["Ask God to help you work hard this summer.","Proverbs 6:6","",false],["Thank God for summer days and sunshine.","Genesis 8:22","",false],["Pray before each meal today in a new way.","1 Corinthians 10:31","",false],["Birth of St. John the Baptist: thank God for people who point you to Jesus.","Luke 1:66","St. John the Baptist",false],["Ask God to help you be generous with your things.","Proverbs 11:25","",false],["Pray for food pantries and the people they serve.","Matthew 25:35","",false],["Thank God that Jesus shared meals with friends.","Luke 24:30","",false],["Thank God that your cup overflows.","Psalm 23:5","",false],["Sts. Peter and Paul: pray for the Pope and for missionaries.","2 Timothy 4:7","Sts. Peter and Paul",false],["Thank God for taking care of you all month.","Psalm 23:1","",false]]},{"name":"July","year":2027,"key":"jul27","color":"#1f7a8c","accent":"#e85d3f","line":"And forgive us our trespasses","psalm":{"ref":"Psalm 103:12"},"question":"How does it feel when someone forgives you?","activity":{"title":"Clean Slate","text":"Write things you're sorry for in sidewalk chalk (or on a whiteboard). Pray together, then wash every word away with water as a picture of how God forgives.","ref":"1 John 1:9"},"devotion":"The Precious Blood of Jesus","prayer":{"name":"A Child's Act of Contrition","text":"My God, I am sorry for my sins with all my heart. I will try not to sin again, and to stay away from whatever leads me to sin. Jesus, have mercy on me. Amen."},"days":[["Thank God for the gift of Confession, where He forgives us.","1 John 1:9","",false],["Examine your day: tell God what you did wrong and pray an Act of Contrition.","Psalm 32:5","",false],["Go to Confession this month. God is waiting with mercy.","John 20:22–23","Confession",false],["Thank God for true freedom in Jesus.","John 8:36","",false],["Ask God to give you a clean heart.","Psalm 51:12","",false],["Thank God that His mercy is new every morning.","Lamentations 3:22–23","",false],["Ask God to help you say \"I'm sorry\" quickly.","Matthew 5:23–24","",false],["Thank God that He doesn't keep a list of our wrongs.","Psalm 130:3–4","",false],["Tell God about a time you felt bad after a mistake.","Psalm 34:19","",false],["Thank God for the story of the lost son coming home.","Luke 15:24","",false],["Ask God to help you not hide your mistakes.","Proverbs 28:13","",false],["Thank Jesus for forgiving Peter.","John 21:17","",false],["Pray for someone who feels guilty.","Romans 8:1","",false],["St. Kateri Tekakwitha: thank God for the beauty of creation.","Psalm 104:24","St. Kateri",false],["Ask God to help you not repeat the same mistake.","John 8:11","",false],["Thank God for a second chance.","Jonah 3:1","",false],["Thank God that He is slow to anger.","Psalm 103:8","",false],["Ask God to help you be honest with your parents.","Proverbs 12:22","",false],["Thank Jesus for welcoming Zacchaeus.","Luke 19:9–10","",false],["Pray for a friend who needs God's forgiveness.","Acts 3:19","",false],["Ask God to wash you whiter than snow.","Isaiah 1:18","",false],["St. Mary Magdalene: thank Jesus for His forgiving love.","John 20:16","St. Mary Magdalene",false],["Tell God about anything bothering your heart.","Psalm 139:23","",false],["Thank God that Jesus prayed for people who hurt Him.","Luke 23:34","",false],["Ask God to help you be gentle when others mess up.","Galatians 6:1","",false],["Sts. Joachim and Anne, Jesus' grandparents: pray for your grandparents.","Sirach 3:12","Sts. Joachim and Anne",false],["Pray for your family to be quick to forgive.","Ephesians 4:32","",false],["Thank God that love covers many mistakes.","1 Peter 4:8","",false],["Ask God to help you get back up and learn.","Proverbs 24:16","",false],["Thank Jesus for His promise to the thief on the cross.","Luke 23:43","",false],["Thank God that nothing can separate you from His love.","Romans 8:38–39","",false]]},{"name":"August","year":2027,"key":"aug27","color":"#b5476b","accent":"#f2b84b","line":"As we forgive those who trespass against us","psalm":{"ref":"Psalm 133:1"},"question":"Why is forgiving sometimes so hard?","activity":{"title":"Peacemaker Plan","text":"Make a family plan for fights: stop, cool down, say \"I'm sorry,\" say \"I forgive you,\" and pray together. Write it on a card and put it where everyone can see it.","ref":"Colossians 3:13"},"devotion":"The Immaculate Heart of Mary","prayer":{"name":"Jesus, Meek and Humble of Heart","text":"Jesus, meek and humble of heart, make my heart like unto thine."},"days":[["Ask God to help you forgive like He forgives you.","Colossians 3:13","",false],["Tell God about someone who hurt your feelings.","Psalm 55:23","",false],["Pray for someone who is hard to get along with.","Matthew 5:44","",false],["Ask God to help you not hold a grudge.","Leviticus 19:18","",false],["Thank God for friends who forgave you.","Proverbs 17:9","",false],["Transfiguration: sit quietly and listen to Jesus.","Matthew 17:5","Transfiguration",false],["Ask God to help you speak gently when upset.","Proverbs 15:1","",false],["Pray for peace between family members.","Romans 12:18","",false],["Thank God that love is not easily angered.","1 Corinthians 13:5","",false],["Ask God to help you forgive again and again.","Matthew 18:21–22","",false],["Tell God about a fight you had and how it ended.","Proverbs 20:3","",false],["Say something kind about someone who was unkind.","Romans 12:14","",false],["Thank God for being ready to forgive.","Psalm 86:5","",false],["St. Maximilian Kolbe gave his life for another. Ask for a brave, loving heart.","John 15:13","St. Maximilian Kolbe",false],["Assumption of Mary: thank God for taking Mary to heaven.","Luke 1:49","Assumption",true],["Read how Esau forgave Jacob.","Genesis 33:4","",false],["Ask God to calm your angry feelings.","Ephesians 4:26","",false],["Thank God for the gift of family.","Psalm 128:3","",false],["Write a kind note to someone you argued with.","Proverbs 16:24","",false],["Ask God to help you not pay back wrong with wrong.","1 Peter 3:9","",false],["Pray for places in the world where there is war.","Psalm 46:10","",false],["Thank God that He is patient with you.","2 Peter 3:9","",false],["Ask God to help you listen before you speak.","James 1:19","",false],["Read how David showed mercy to Saul.","1 Samuel 24:11","",false],["Thank Jesus for loving us first.","Romans 5:8","",false],["Ask God to help you treat others how you want to be treated.","Luke 6:31","",false],["St. Monica never stopped praying for her son. Pray for someone you love.","Luke 18:1","St. Monica",false],["Ask God to help you let go of \"that's not fair.\"","Proverbs 19:11","",false],["Thank God for the peace that comes from forgiving.","Philippians 4:7","",false],["Pray for a great start to the new school year.","Isaiah 41:10","",false],["Tell God the names of people you choose to forgive.","Luke 6:37","",false]]},{"name":"September","year":2027,"key":"sep27","color":"#8a5a2b","accent":"#e8a33f","line":"And lead us not into temptation","psalm":{"ref":"Psalm 119:11"},"question":"What is one thing that pulls you away from God, and how can we help each other?","activity":{"title":"Armor Up","text":"Make paper armor together, one piece each week: belt, breastplate, shoes, shield, helmet, and sword. Tape them on the fridge and talk about what each piece protects.","ref":"Ephesians 6:10–18"},"devotion":"Our Lady of Sorrows","prayer":{"name":"Prayer to St. Michael","text":"St. Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil. May God rebuke him, we humbly pray; and do thou, O Prince of the heavenly host, by the power of God, cast into hell Satan and all the evil spirits who prowl about the world seeking the ruin of souls. Amen."},"days":[["Ask God to help you choose right at school.","Psalm 119:9","",false],["Thank God for always giving a way out.","1 Corinthians 10:13","",false],["Armor piece #1: the belt of truth.","Ephesians 6:14","",false],["Ask God to help you walk away from wrong.","2 Timothy 2:22","",false],["Thank Jesus for answering temptation with God's Word.","Matthew 4:10","",false],["Labor Day: thank God for good work to do.","Ecclesiastes 3:13","",false],["Armor piece #2: the breastplate of righteousness.","Ephesians 6:14","",false],["Birthday of Mary: celebrate with a treat and a Hail Mary.","Luke 1:28","Nativity of Mary",false],["Pray for friends who are tempted to do wrong.","Hebrews 3:13","",false],["Armor piece #3: shoes of peace.","Ephesians 6:15","",false],["Ask God to help you be brave and say no.","Proverbs 1:10","",false],["Thank God for friends who help you do right.","Proverbs 13:20","",false],["Armor piece #4: the shield of faith.","Ephesians 6:16","",false],["Exaltation of the Holy Cross: thank Jesus for the cross.","John 3:16","Holy Cross",false],["Our Lady of Sorrows: pray for anyone who is grieving.","John 19:25","Our Lady of Sorrows",false],["Armor piece #5: the helmet of salvation.","Ephesians 6:17","",false],["Ask God to help you use screens wisely.","Ephesians 5:15–16","",false],["Pray for your teachers and coaches.","Hebrews 13:17","",false],["Armor piece #6: the sword of the Spirit.","Ephesians 6:17","",false],["Ask God to help you tell the truth.","Zechariah 8:16","",false],["Thank God that He is stronger than any temptation.","1 John 4:4","",false],["Ask God to help you say no to wrong like Joseph.","Genesis 39:9","",false],["Tell God about something that's hard to stop doing.","Matthew 26:41","",false],["Thank God that His Spirit helps you choose right.","Galatians 5:16","",false],["Ask God to fill your mind with good things.","Philippians 4:8","",false],["Pray for someone trying to break a bad habit.","Romans 12:2","",false],["St. Vincent de Paul: give food or clothes to the poor.","Matthew 25:35","St. Vincent de Paul",false],["Ask God to help you not want what others have.","Exodus 20:17","",false],["Sts. Michael, Gabriel and Raphael: pray the St. Michael Prayer.","Revelation 12:7–8","Archangels",false],["Pray \"lead us not into temptation\" and ask St. Michael for help.","James 4:7","",false]]},{"name":"October","year":2027,"key":"oct27","color":"#1e3a5f","accent":"#f2b84b","line":"But deliver us from evil","psalm":{"ref":"Psalm 46:2"},"question":"When have you felt God keep you safe?","activity":{"title":"Rescue Wall","text":"Put a sheet of paper on the fridge. Each time God helps, protects, or answers a prayer this month, write it down. At the end of October, read the whole list and celebrate.","ref":"Psalm 34:5"},"devotion":"The Holy Rosary","prayer":{"name":"Guardian Angel Prayer","text":"Angel of God, my guardian dear, to whom God's love commits me here, ever this day be at my side, to light and guard, to rule and guide. Amen."},"days":[["St. Thérèse of Lisieux: do one small thing with great love today.","Matthew 18:3","St. Thérèse",false],["Guardian Angels: thank God for your guardian angel.","Psalm 91:11","Guardian Angels",false],["Thank God that Jesus is stronger than evil.","1 John 3:8","",false],["St. Francis of Assisi: thank God for animals and bless your pets.","Genesis 1:25","St. Francis",false],["Thank God for rescuing Daniel from the lions.","Daniel 6:23","",false],["Pray for kids who live in dangerous places.","Psalm 12:6","",false],["Our Lady of the Rosary: pray the Rosary together.","Luke 1:28","Our Lady of the Rosary",false],["Thank God that He fights for you.","Exodus 14:14","",false],["Read how David trusted God against Goliath.","1 Samuel 17:47","",false],["Ask God to help you beat evil with good.","Romans 12:21","",false],["Thank God for people who stand up for the weak.","Psalm 82:3","",false],["Pray for someone going through a storm in life.","Mark 4:39","",false],["Thank God that He hears your cries for help.","Psalm 34:18","",false],["Ask God to make you strong and courageous.","Deuteronomy 31:6","",false],["St. Teresa of Ávila: tell God, \"You are enough for me.\"","Isaiah 26:3","St. Teresa of Ávila",false],["Thank God for His angels.","Psalm 34:8","",false],["Pray for someone who is sick in the hospital.","Psalm 41:4","",false],["Ask God to keep bad thoughts away.","2 Corinthians 10:5","",false],["Thank God that Jesus calmed the storm.","Matthew 8:26","",false],["Tell God about a time He helped you.","Psalm 40:2–3","",false],["Ask God to help you stand up for someone.","Isaiah 1:17","",false],["St. John Paul II said \"Be not afraid!\" Ask God for courage.","Matthew 14:27","St. John Paul II",false],["Pray for missionaries in hard places.","2 Thessalonians 3:1–3","",false],["Read how God was with three friends in the fire.","Daniel 3:92","",false],["Ask God to guard your heart.","Proverbs 4:23","",false],["Thank God that one day evil will be gone forever.","Revelation 21:4","",false],["Pray for people who are lonely or afraid.","Deuteronomy 31:8","",false],["Ask God to give you peace when things are scary.","Isaiah 26:3","",false],["Thank God that He is your shield.","Psalm 3:4","",false],["Ask God to rescue someone you care about.","Psalm 50:15","",false],["Thank God that in Him there is no darkness at all.","1 John 1:5","",false]]},{"name":"November","year":2027,"key":"nov27","color":"#a64b2a","accent":"#f2c14e","line":"For the kingdom, the power and the glory are yours","psalm":{"ref":"Psalm 29:2"},"question":"What does it mean that God's glory lasts forever?","activity":{"title":"Gratitude Chain","text":"Cut paper strips. Every day, each person writes one thing to praise God for and adds a link to the chain. Hang it up and watch it grow all the way to Thanksgiving.","ref":"1 Chronicles 29:11"},"devotion":"The Holy Souls in Purgatory","prayer":{"name":"Eternal Rest","text":"Eternal rest grant unto them, O Lord, and let perpetual light shine upon them. May they rest in peace. Amen."},"days":[["All Saints Day: dress up as a saint and tell their story.","Hebrews 12:1","All Saints",false],["All Souls Day: pray for family members who have died.","Wisdom 3:1","All Souls",false],["Praise God for making the mountains.","Psalm 90:2","",false],["Thank God for your home.","Proverbs 24:3–4","",false],["Praise God for His power over wind and waves.","Mark 4:41","",false],["Thank God for your friends.","Ecclesiastes 4:9–10","",false],["Praise God for making you wonderfully.","Psalm 139:14","",false],["Thank God for your favorite song.","Psalm 40:4","",false],["Praise God that His kingdom lasts forever.","Psalm 145:13","",false],["Thank God for the people who teach you.","Proverbs 9:9","",false],["St. Martin shared his cloak. Pray for veterans and share something warm.","Matthew 25:36","Veterans Day · St. Martin",false],["Praise God for His glory in the sky.","Psalm 57:6","",false],["Thank God for animals and pets.","Genesis 1:25","",false],["Praise God because nothing is too hard for Him.","Jeremiah 32:17","",false],["Thank God for your church.","Psalm 122:1","",false],["Praise God for His faithfulness.","Psalm 36:6","",false],["Thank God for the Bible.","2 Timothy 3:16","",false],["Praise God for being King of kings.","1 Timothy 6:15","",false],["Thank God for warm clothes and blankets.","Matthew 6:30","",false],["Praise God for His amazing grace.","Ephesians 2:8","",false],["Christ the King: name Jesus the King of your home.","Revelation 19:16","Christ the King",false],["Praise God for the harvest.","Psalm 65:12","",false],["Thank God for doctors and nurses.","Jeremiah 30:17","",false],["Praise God by naming five blessings.","Psalm 103:2","",false],["Thanksgiving! Thank God together for everything.","Psalm 107:1","Thanksgiving",false],["Thank God for giving more than enough.","Ephesians 3:20","",false],["Praise God because He is good all the time.","Psalm 100:5","",false],["First Sunday of Advent: light the first purple candle.","Romans 13:11–12","Advent begins",false],["Praise God that His glory fills the earth.","Habakkuk 2:14","",false],["St. Andrew brought his brother to Jesus. Invite someone to Mass.","John 1:41","St. Andrew",false]]},{"name":"December","year":2027,"key":"dec27","color":"#7a1f2b","accent":"#e8b84a","line":"Amen","psalm":{"ref":"Psalm 96:11"},"question":"\"Amen\" means \"yes, it is true.\" What do you want to say yes to God about?","activity":{"title":"Yes and Amen Candles","text":"Each evening, light a candle and read one promise God kept in the Christmas story. Blow it out together and say \"Amen!\"","ref":"2 Corinthians 1:20"},"devotion":"Advent and the Immaculate Conception","prayer":{"name":"Come, Lord Jesus","text":"Come, Lord Jesus, come into our hearts and our home. Make us ready to welcome you. Amen."},"days":[["Light a candle and thank God for keeping His promises.","Joshua 21:45","",false],["Thank God for promising a Savior.","Isaiah 7:14","",false],["Praise God for keeping His promise to Abraham.","Genesis 12:2–3","",false],["Thank God that Jesus came from King David's family.","Isaiah 11:1","",false],["Second Sunday of Advent: light the second purple candle.","Isaiah 40:3","Advent",false],["St. Nicholas: give someone a secret gift.","Matthew 6:3–4","St. Nicholas",false],["Thank God for Joseph's obedience.","Matthew 1:24","",false],["Immaculate Conception: go to Mass and pray a Hail Mary together.","Luke 1:28","Immaculate Conception",true],["Pray for someone who is lonely at Christmas.","Psalm 25:16","",false],["Thank God for John the Baptist, who got people ready.","Luke 1:76","",false],["Give a gift to someone in need.","Proverbs 22:9","",false],["Gaudete Sunday: light the rose candle and rejoice!","Philippians 4:4","Gaudete Sunday",false],["Thank God for the shepherds who heard the news.","Luke 2:8–11","",false],["Ask God to fill your home with joy.","Luke 2:10","",false],["Praise God with the angels: \"Glory to God!\"","Luke 2:14","",false],["Thank God for lights that remind you of Jesus.","Isaiah 9:1","",false],["Pray for families who are far apart this Christmas.","Psalm 145:18","",false],["Thank God for the wise men who searched for Jesus.","Matthew 2:11","",false],["Fourth Sunday of Advent: light all four candles.","Matthew 1:23","Advent",false],["Thank God that Jesus came to live with us.","John 1:14","",false],["Pray for people who are sad during the holidays.","Psalm 147:3","",false],["Praise God for His perfect timing.","Galatians 4:4","",false],["Thank God for Simeon and Anna, who waited for Jesus.","Luke 2:30","",false],["Christmas Eve: read the Christmas story together.","Luke 2:1–20","Christmas Eve",false],["Merry Christmas! Go to Mass and welcome Jesus, born for us.","Luke 2:10–11","Christmas",true],["Holy Family: thank God for your family and bless each person.","Luke 2:51–52","Holy Family",false],["Ask God to help you keep Christmas joy all year.","Philippians 4:4","",false],["Holy Innocents: pray for babies and children everywhere.","Mark 10:14","Holy Innocents",false],["Tell God about a prayer He answered this year.","Psalm 66:19–20","",false],["Ask God to lead your family into the new year.","Proverbs 16:3","",false],["Say \"Amen!\" Yes, God, we trust You!","Revelation 7:12","",false]]}];
+const OUR_FATHER="Our Father, who art in heaven, hallowed be thy name; thy kingdom come, thy will be done on earth as it is in heaven. Give us this day our daily bread, and forgive us our trespasses, as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.";
+// Faith-and-family scene illustrations, 240x160, flat style.
+const SK=['#5c3a24','#8d5a3b','#c68a5e','#e8b48c'];
+const GOLD='#f2c14e';
+function seeded(n){let s=n;return()=>((s=(s*9301+49297)%233280)/233280)}
+function dots(n,seed,x0,y0,w,h,rmin,rmax,fill,op){const r=seeded(seed);let o='';for(let i=0;i<n;i++){o+=`<circle cx="${(x0+r()*w).toFixed(1)}" cy="${(y0+r()*h).toFixed(1)}" r="${(rmin+r()*(rmax-rmin)).toFixed(1)}" fill="${fill}" opacity="${op??1}"/>`}return o}
+function grad(id,a,b){return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`}
+function spark(x,y,r,c){return `<path d="M${x} ${y-r}Q${x} ${y} ${x+r} ${y}Q${x} ${y} ${x} ${y+r}Q${x} ${y} ${x-r} ${y}Q${x} ${y} ${x} ${y-r}z" fill="${c}"/>`}
+function cross(x,y,h,c,w=3){return `<rect x="${x-w/2}" y="${y-h}" width="${w}" height="${h}" fill="${c}"/><rect x="${x-h*0.3}" y="${y-h*0.72}" width="${h*0.6}" height="${w}" fill="${c}"/>`}
+// standing person, base at (x,y). o: pray, armL/armR (raise), halo, veil, apron, hold (hand out to side: 'L'|'R')
+function P(x,y,s,body,skin,hair,o={}){
+  let g=`<g transform="translate(${x} ${y}) scale(${s})">`;
+  if(o.veil)g+=`<path d="M-11 -33a11 12 0 0 1 22 0L15 -10H-15z" fill="${o.veil}"/>`;
+  g+=`<path d="M-11 0V-17a11 11 0 0 1 22 0V0z" fill="${body}"/>`;
+  if(o.apron)g+=`<path d="M-7 -20h14v20h-14z" fill="${o.apron}"/>`;
+  if(o.armL)g+=`<path d="M-8 -24L-17 -44" stroke="${body}" stroke-width="5" stroke-linecap="round"/><circle cx="-17.5" cy="-45.5" r="3" fill="${skin}"/>`;
+  if(o.armR)g+=`<path d="M8 -24L17 -44" stroke="${body}" stroke-width="5" stroke-linecap="round"/><circle cx="17.5" cy="-45.5" r="3" fill="${skin}"/>`;
+  if(o.hold==='L')g+=`<path d="M-9 -22L-17 -12" stroke="${body}" stroke-width="5" stroke-linecap="round"/><circle cx="-18" cy="-11" r="3" fill="${skin}"/>`;
+  if(o.hold==='R')g+=`<path d="M9 -22L17 -12" stroke="${body}" stroke-width="5" stroke-linecap="round"/><circle cx="18" cy="-11" r="3" fill="${skin}"/>`;
+  g+=`<circle cy="-36" r="8" fill="${skin}"/>`;
+  if(hair&&!o.veil)g+=`<path d="M-8.6 -36a8.6 8.6 0 0 1 17.2 0q-8.6-5-17.2 0z" fill="${hair}"/>`;
+  if(o.pray)g+=`<path d="M-3 -12L0 -24L3 -12z" fill="${skin}"/>`;
+  if(o.halo)g+=`<ellipse cy="-47" rx="9" ry="2.6" fill="none" stroke="${GOLD}" stroke-width="2"/>`;
+  return g+'</g>';
+}
+// kneeling person facing right (dir=1) or left (dir=-1)
+function K(x,y,s,body,skin,hair,o={}){
+  const d=o.dir||1;
+  let g=`<g transform="translate(${x} ${y}) scale(${s*d} ${s})">`;
+  if(o.veil)g+=`<path d="M-9 -27a10 11 0 0 1 20 0L12 -8H-10z" fill="${o.veil}"/>`;
+  g+=`<path d="M-8 0V-14a8 8 0 0 1 16 0V-5H21V0z" fill="${body}"/>`;
+  g+=`<circle cx="1" cy="-28" r="7.5" fill="${skin}"/>`;
+  if(hair&&!o.veil)g+=`<path d="M-6.5 -28a7.5 7.5 0 0 1 15 0q-7.5-4.5-15 0z" fill="${hair}"/>`;
+  g+=`<path d="M7 -10L14 -21L11 -9z" fill="${skin}"/>`;
+  if(o.beads)g+=`<path d="M11 -10q2 8 -3 12" fill="none" stroke="${o.beads}" stroke-width="1.6" stroke-dasharray="1.6 1.4"/>`;
+  if(o.halo)g+=`<ellipse cx="1" cy="-38" rx="8" ry="2.4" fill="none" stroke="${GOLD}" stroke-width="2"/>`;
+  return g+'</g>';
+}
+function church(x,y,s,wall,roof,win){
+  return `<g transform="translate(${x} ${y}) scale(${s})">
+  <rect x="-28" y="-40" width="56" height="40" fill="${wall}"/><path d="M-32 -38L0 -62L32 -38z" fill="${roof}"/>
+  <rect x="-44" y="-74" width="18" height="74" fill="${wall}"/><path d="M-48 -72L-35 -100L-22 -72z" fill="${roof}"/>
+  ${cross(-35,-100,14,GOLD,2.4)}
+  <path d="M-7 0V-16a7 7 0 0 1 14 0V0z" fill="#5a3a25"/>
+  <path d="M-20 -14v-12a4 4 0 0 1 8 0v12zM12 -14v-12a4 4 0 0 1 8 0v12zM-39 -40v-12a4 4 0 0 1 8 0v12z" fill="${win}"/>
+  <circle cx="0" cy="-46" r="6" fill="${win}"/><path d="M0 -52v12M-6 -46h12" stroke="${roof}" stroke-width="1.2"/>
+  </g>`;
+}
+function wreath(x,y,s,lit){ // Advent wreath: 3 purple + 1 rose; lit = how many lit
+  const cols=['#6b3fa0','#6b3fa0','#e88aa8','#6b3fa0'];const xs=[-20,-7,7,20];
+  let g=`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="2" rx="30" ry="9" fill="#2e6b4f"/><ellipse cx="0" cy="0" rx="26" ry="6" fill="#3f8a50"/>${dots(10,77,-26,-4,52,8,1.2,2,'#c4373a')}`;
+  xs.forEach((cx,i)=>{const h=i===2?18:22;g+=`<rect x="${cx-3}" y="${-h}" width="6" height="${h}" rx="1.5" fill="${cols[i]}"/>`;if(i<lit)g+=`<circle cx="${cx}" cy="${-h-6}" r="6" fill="${GOLD}" opacity=".3"/><path d="M${cx} ${-h-10}c3 4 3 7 0 8-3-1-3-4 0-8z" fill="${GOLD}"/>`});
+  return g+'</g>';
+}
+function mary(x,y,s){ // statue of Mary
+  return `<g transform="translate(${x} ${y}) scale(${s})"><rect x="-12" y="-6" width="24" height="6" fill="#cfc6b8"/><rect x="-9" y="-14" width="18" height="8" fill="#e2dbd0"/>
+  <path d="M-10 -14L-7 -52H7L10 -14z" fill="#fff"/><path d="M-12 -14L-9 -50Q0 -66 9 -50L12 -14L6 -14L5 -46H-5L-6 -14z" fill="#5b8fd6"/>
+  <circle cy="-56" r="6" fill="#f1dcc4"/><path d="M-7 -55a7 8 0 0 1 14 0L8 -48H-8z" fill="#5b8fd6"/><circle cy="-56" r="5.2" fill="#f1dcc4"/>
+  <path d="M-2 -38L0 -46L2 -38z" fill="#f1dcc4"/><ellipse cy="-66" rx="8" ry="2.2" fill="none" stroke="${GOLD}" stroke-width="1.8"/></g>`;
+}
+function table(x1,x2,y,c='#8a5a2b',cloth){return `<rect x="${x1}" y="${y}" width="${x2-x1}" height="8" fill="${c}"/>${cloth?`<rect x="${x1}" y="${y-2}" width="${x2-x1}" height="6" fill="${cloth}"/>`:''}<rect x="${x1+6}" y="${y+8}" width="5" height="${160-y-8}" fill="${c}"/><rect x="${x2-11}" y="${y+8}" width="5" height="${160-y-8}" fill="${c}"/>`}
+const handsLink=(x1,x2,y,c)=>`<path d="M${x1} ${y}Q${(x1+x2)/2} ${y+8} ${x2} ${y}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+
+const ART = {
+cover: () => `${grad('gc','#f6c27a','#fde9c4')}<rect width="240" height="160" fill="url(#gc)"/>
+<circle cx="182" cy="62" r="26" fill="#fff6dd" opacity=".9"/>
+<path d="M0 160V112Q60 92 130 104T240 96V160z" fill="#9cc77f"/>
+${church(198,112,.6,'#fff4e0','#b5476b','#ffd66b')}
+<path d="M0 160V128Q70 110 150 126T240 122V160z" fill="#6aae5f"/>
+<path d="M150 160Q140 140 158 128T188 106" fill="none" stroke="#efdcaa" stroke-width="9" stroke-linecap="round"/>
+${P(70,142,1.05,'#2f5d8a',SK[1],'#1a1010',{hold:'R'})}${P(92,142,.7,'#f2b84b',SK[1],'#1a1010',{hold:'L'})}${P(112,142,.98,'#c4553a',SK[1],'#2a1a12',{hold:'R'})}${P(132,142,.6,'#2f8a7a',SK[1],'#1a1010',{armR:1})}${P(52,142,.55,'#7a4a9e',SK[1],'#2a1a12',{hold:'R'})}
+${[[20,150,'#fff'],[36,146,'#f2b84b'],[210,150,'#e85d3f'],[226,142,'#fff']].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="3" fill="${c}"/>`).join('')}
+<g fill="none" stroke="#7a4a20" stroke-width="1.3" stroke-linecap="round"><path d="M40 40q4-4 8 0q4-4 8 0"/><path d="M60 30q3-3 6 0q3-3 6 0"/></g>`,
+
+oct26: () => `<rect width="240" height="160" fill="#283454"/>
+<rect x="96" y="14" width="56" height="48" rx="4" fill="#3b4b6b" stroke="#c9b28a" stroke-width="3"/><path d="M124 14v48M96 38h56" stroke="#c9b28a" stroke-width="2"/>
+<g stroke="#a9bad0" stroke-width="1" opacity=".8">${Array.from({length:12},(_,i)=>`<path d="M${100+i*4.4} ${18+(i*7)%30}l-2 6"/>`).join('')}</g>
+<path d="M138 18l-5 10h4l-4 9" fill="none" stroke="#f6e7a0" stroke-width="1.8"/>
+<rect y="128" width="240" height="32" fill="#3b2f3f"/><ellipse cx="120" cy="140" rx="96" ry="10" fill="#4a3a52"/>
+<g opacity=".38" transform="translate(150 128)"><path d="M-4 -44Q-36 -70 -40 -30Q-26 -40 -6 -34z" fill="#fff"/><path d="M4 -44Q36 -70 40 -30Q26 -40 6 -34z" fill="#fff"/><path d="M-12 0L-6 -46H6L12 0z" fill="#fff"/><circle cy="-52" r="7" fill="#fff"/></g><ellipse cx="150" cy="65" rx="9" ry="2.5" fill="none" stroke="${GOLD}" stroke-width="1.8" opacity=".85"/>
+<rect x="176" y="100" width="52" height="28" fill="#6b4428"/><rect x="176" y="98" width="52" height="4" fill="#fff4e0"/>
+${cross(202,98,30,'#c9a46b',3)}
+<rect x="184" y="88" width="5" height="10" fill="#fff4e0"/><path d="M186.5 80c3 4 3 7 0 8-3-1-3-4 0-8z" fill="${GOLD}"/><circle cx="186.5" cy="84" r="8" fill="${GOLD}" opacity=".18"/>
+${mary(218,98,.45)}
+${K(54,132,1,'#2f5d8a',SK[1],'#1a1010',{beads:'#c9a46b'})}${K(84,132,.95,'#c4553a',SK[2],'#2a1a12',{beads:'#fff'})}${K(114,132,.7,'#f2a541',SK[1],'#1a1010')}${K(140,132,.62,'#2f8a7a',SK[2],'#3b2416')}`,
+
+nov26: () => `<rect width="240" height="160" fill="#f3d9b0"/>
+<rect x="18" y="16" width="52" height="44" rx="4" fill="#f7b267" stroke="#fff4e0" stroke-width="3"/><circle cx="44" cy="42" r="12" fill="#c4651a"/><circle cx="34" cy="36" r="8" fill="#d9772f"/><rect x="42" y="44" width="4" height="16" fill="#6b4428"/>
+${cross(120,48,30,'#7a4a20',4)}
+<rect x="170" y="18" width="50" height="40" rx="3" fill="#fff4e0" stroke="#9a5a1f" stroke-width="2"/><path d="M178 30h34M178 38h26M178 46h30" stroke="#d9a65b" stroke-width="2"/>
+${P(52,108,.95,'#2f5d8a',SK[0],'#1a1010')}${P(84,108,.75,'#f2a541',SK[1],'#1a1010')}${P(120,108,1,'#9a5a1f',SK[2],'#3b2416')}${P(156,108,.72,'#b5476b',SK[1],'#1a1010')}${P(190,108,.95,'#3f7d4e',SK[3],'#c8873a')}
+${handsLink(62,74,96,SK[1])}${handsLink(94,110,96,SK[2])}${handsLink(131,146,96,SK[1])}${handsLink(166,180,96,SK[3])}
+${table(24,218,106,'#7a4a20','#fff4e0')}
+<ellipse cx="120" cy="100" rx="18" ry="9" fill="#a8582a"/><ellipse cx="114" cy="96" rx="9" ry="5" fill="#c4753a"/>
+<ellipse cx="70" cy="102" rx="10" ry="4" fill="#d9a65b"/><path d="M168 104h20l-3-6h-14z" fill="#e07a1f"/>
+<rect x="92" y="88" width="4" height="14" fill="#fff4e0"/><path d="M94 82c3 4 3 6 0 7-3-1-3-3 0-7z" fill="${GOLD}"/><rect x="144" y="88" width="4" height="14" fill="#fff4e0"/><path d="M146 82c3 4 3 6 0 7-3-1-3-3 0-7z" fill="${GOLD}"/>`,
+
+dec26: () => `<rect width="240" height="160" fill="#2b1d3a"/>
+<rect x="150" y="14" width="70" height="56" rx="5" fill="#16203f" stroke="#c9a46b" stroke-width="3"/>${dots(14,9,154,18,62,48,.4,1,'#fff',.8)}${spark(196,34,8,'#ffe9a0')}
+<circle cx="110" cy="112" r="60" fill="${GOLD}" opacity=".08"/>
+${P(44,118,1,'#5b4a8a',SK[0],'#1a1010')}${P(176,118,1,'#c4553a',SK[1],'#2a1a12')}
+${P(78,118,.68,'#2f8a7a',SK[0],'#1a1010',{pray:1})}${P(148,118,.62,'#f2b84b',SK[1],'#1a1010',{pray:1})}
+<rect y="116" width="240" height="44" fill="#4a2a1e"/><rect y="112" width="240" height="6" fill="#6b3a28"/>
+${wreath(112,112,1.15,2)}
+<g transform="translate(196 112)"><path d="M-16 0V-14L0 -24L16 -14V0z" fill="#8a5a2b"/><rect x="-8" y="-10" width="16" height="10" fill="#ffcf6b"/><ellipse cy="-4" rx="4" ry="2.2" fill="#fff4e0"/></g>`,
+
+jan27: () => `${grad('g1','#8fb0d0','#d5e4f2')}<rect width="240" height="160" fill="url(#g1)"/>
+<rect y="120" width="240" height="40" fill="#f8fbfd"/><ellipse cx="60" cy="122" rx="110" ry="14" fill="#eef4fa"/>
+${church(180,122,.95,'#f4ede0','#2f5d8a','#ffd66b')}
+<path d="M150 122L162 106h-9" fill="none"/><path d="M152 122L160 108" stroke="#fff" stroke-width="0"/>
+${P(56,136,1,'#2f5d8a',SK[1],'#1a1010',{hold:'R'})}${P(76,136,.62,'#e85d3f',SK[1],'#1a1010',{hold:'R'})}${P(98,136,.95,'#7a4a9e',SK[1],'#2a1a12',{hold:'L'})}
+<ellipse cx="104" cy="112" rx="5" ry="4" fill="#f2b84b"/><circle cx="104" cy="106" r="3.5" fill="${SK[1]}"/>
+${dots(45,7,0,0,240,118,.8,2,'#fff',.9)}
+${[0,1,2,3,4,5].map(i=>`<ellipse cx="${110+i*9}" cy="${140-i*2.5}" rx="2" ry="1" fill="#d5e0ea"/>`).join('')}`,
+
+feb27: () => `<rect width="240" height="160" fill="#141d3d"/>${dots(70,11,0,0,240,110,.4,1.3,'#fff',.85)}
+${spark(52,30,7,GOLD)}${spark(130,20,5,'#fff')}<circle cx="196" cy="36" r="16" fill="#f5e6b8"/><circle cx="203" cy="31" r="14" fill="#141d3d"/>
+<path d="M62 72 98 54" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+<path d="M150 104V92M146 96h8" stroke="#5a6a9a" stroke-width="2"/>
+<path d="M0 160V122Q70 94 150 112T240 102V160z" fill="#0b1230"/>
+<path d="M70 120h70l6 6H64z" fill="#c4553a"/>
+${P(84,122,.9,'#3a4a8c',SK[1],'#1a1010',{armR:1})}${P(106,122,.62,'#f2b84b',SK[1],'#1a1010')}${P(124,122,.85,'#b5476b',SK[1],'#2a1a12')}${P(140,122,.5,'#2f8a7a',SK[0],'#1a1010')}
+<path d="M114 98q8-8 16 0" fill="none" stroke="#b5476b" stroke-width="4" stroke-linecap="round"/>`,
+
+mar27: () => `${grad('g3','#f7d9a0','#f2a76b')}<rect width="240" height="160" fill="url(#g3)"/>
+<g stroke="#fff6d8" stroke-width="3" stroke-linecap="round" opacity=".8"><path d="M176 30V16M150 40l-8-10M202 40l8-10"/></g><circle cx="176" cy="62" r="24" fill="#fff2c4"/>
+<g fill="#5a3a25" opacity=".7">${cross(196,70,16,'#5a3a25',2)}${cross(208,74,12,'#5a3a25',2)}${cross(184,74,12,'#5a3a25',2)}</g>
+<path d="M0 160V100Q60 78 130 96T240 88V160z" fill="#6fa36f"/>
+<path d="M120 124Q118 70 160 66Q206 66 214 124z" fill="#8c8478"/><path d="M146 124v-24a14 14 0 0 1 28 0v24z" fill="#2c2a30"/><circle cx="196" cy="114" r="14" fill="#a39b8e"/>
+<path d="M150 124h20" stroke="#fff6d8" stroke-width="3" opacity=".6"/>
+<path d="M0 160V130Q80 116 150 128T240 126V160z" fill="#3f7d4e"/>
+${P(52,146,.95,'#e85d3f',SK[1],'#1a1010',{armR:1})}${P(74,146,.6,'#f2b84b',SK[1],'#1a1010',{armL:1,armR:1})}${P(94,146,.9,'#7a4a9e',SK[2],'#3b2416')}${P(112,146,.5,'#2f8a7a',SK[1],'#1a1010')}
+${[[20,150],[34,142],[132,152],[226,148]].map(([x,y])=>`<path d="M${x} ${y}V${y-12}" stroke="#3f7d4e" stroke-width="2"/><path d="M${x} ${y-12}l-5-6 5 2 5-2z" fill="#fff"/>`).join('')}`,
+
+apr27: () => `<rect width="240" height="160" fill="#e8eef7"/>
+${cross(120,46,26,'#7a4a9e',4)}
+<rect x="20" y="16" width="44" height="34" rx="3" fill="#bfe0f0" stroke="#fff" stroke-width="3"/><rect x="176" y="16" width="44" height="34" rx="3" fill="#bfe0f0" stroke="#fff" stroke-width="3"/>
+${P(78,104,.95,'#7a4a9e',SK[1],'#2a1a12',{apron:'#fff'})}${P(116,104,.7,'#2f8a7a',SK[0],'#1a1010',{apron:'#fff'})}${P(150,104,.95,'#c4553a',SK[2],'#3b2416',{apron:'#fff'})}
+<rect x="40" y="102" width="160" height="10" fill="#9aa7b8"/><rect x="44" y="112" width="152" height="48" fill="#b7c3d2"/>
+<path d="M92 92h24l-2 10H94z" fill="#5a6a7a"/><g stroke="#fff" stroke-width="1.6" fill="none" opacity=".8"><path d="M98 88q-3-5 0-9M106 88q-3-5 0-9"/></g>
+<ellipse cx="140" cy="100" rx="10" ry="3" fill="#fff"/><ellipse cx="140" cy="99" rx="7" ry="2" fill="#e07a1f"/><ellipse cx="66" cy="100" rx="9" ry="3.5" fill="#d9a65b"/>
+${P(30,160,1,'#3f5d7a',SK[3],'#9a9a9a')}<path d="M44 160V128" stroke="#6b4428" stroke-width="2.5"/>${P(212,160,.95,'#b5476b',SK[0],'#1a1010',{hold:'L'})}${P(228,160,.55,'#f2b84b',SK[0],'#1a1010')}`,
+
+may27: () => `<rect width="240" height="160" fill="#fde8d8"/><circle cx="208" cy="30" r="16" fill="#f6c35b"/>
+<path d="M0 160V118Q120 104 240 118V160z" fill="#8fbf6e"/>
+${mary(150,122,1.15)}
+<g>${[0,1,2,3,4,5,6].map(i=>{const a=-Math.PI+i*Math.PI/6,cx=150+Math.cos(a)*9,cy=122-76*1.15+3+Math.sin(a)*2;return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.6" fill="${['#e85d6f','#fff','#f2b84b'][i%3]}"/>`}).join('')}</g>
+${[[112,126],[128,132],[176,130],[192,124]].map(([x,y],i)=>`<path d="M${x} ${y}V${y-14}" stroke="#3f7d4e" stroke-width="2"/><circle cx="${x}" cy="${y-17}" r="5" fill="${['#e85d6f','#f2b84b','#fff','#c4553a'][i]}"/>`).join('')}
+${P(110,140,.62,'#c4553a',SK[1],'#1a1010',{armR:1})}<circle cx="128" cy="92" r="0"/>
+${P(70,140,.95,'#3f7d4e',SK[1],'#2a1a12',{pray:1})}${P(44,140,1,'#2f5d8a',SK[1],'#1a1010',{pray:1})}${P(88,140,.5,'#b5476b',SK[0],'#1a1010',{hold:'R'})}
+<circle cx="97" cy="134" r="4" fill="#e85d6f"/><circle cx="101" cy="131" r="3" fill="#fff"/>`,
+
+jun27: () => `<rect width="240" height="160" fill="#f3dfb8"/>
+<g transform="translate(120 34)"><rect x="-18" y="-22" width="36" height="42" rx="3" fill="#fff4e0" stroke="#d08a1e" stroke-width="2.5"/><path d="M0 12c-11-8-15-13-15-18a7 7 0 0 1 15-3 7 7 0 0 1 15 3c0 5-4 10-15 18z" fill="#c4373a"/><path d="M0 -8v-8M-3 -13h6" stroke="#f2c14e" stroke-width="2"/><path d="M-5 -6q5-6 10 0" fill="none" stroke="#f2c14e" stroke-width="1.5"/></g>
+<rect x="180" y="16" width="46" height="40" rx="3" fill="#bfe0f0" stroke="#fff" stroke-width="3"/><circle cx="194" cy="30" r="7" fill="#f6c35b"/>
+${P(40,110,.95,'#3f7d4e',SK[0],'#1a1010',{pray:1})}${P(76,110,.65,'#e85d3f',SK[1],'#1a1010',{pray:1})}${P(164,110,.7,'#2f5d8a',SK[1],'#1a1010',{pray:1})}${P(200,110,.95,'#d08a1e',SK[2],'#3b2416',{pray:1})}
+${table(20,220,106,'#8a5a2b','#fff')}
+<ellipse cx="120" cy="98" rx="28" ry="12" fill="#d08a1e"/><ellipse cx="120" cy="94" rx="25" ry="9" fill="#e9a748"/><g stroke="#b5701a" stroke-width="2" stroke-linecap="round"><path d="M106 91l5 5M118 89l5 5M130 91l5 5"/></g>
+<path d="M60 100h16l-2 6H62z" fill="#fff4e0"/><path d="M166 100h16l-2 6h-12z" fill="#fff4e0"/><rect x="146" y="92" width="8" height="12" rx="2" fill="#c4553a" opacity=".85"/>`,
+
+jul27: () => `<rect width="240" height="160" fill="#bfe6ee"/><circle cx="200" cy="30" r="16" fill="#ffe08a"/>
+<rect x="0" y="70" width="240" height="40" fill="#8fbf6e"/><rect x="16" y="40" width="70" height="40" fill="#f2e3c6"/><path d="M10 42L51 18L92 42z" fill="#1f7a8c"/><rect x="44" y="56" width="12" height="24" fill="#6b4428"/>
+<rect y="104" width="240" height="56" fill="#d9d5cf"/><path d="M0 104H240" stroke="#c4bfb7" stroke-width="2"/>
+<path d="M150 146c-12-9-18-14-18-20a8 8 0 0 1 18-3 8 8 0 0 1 18 3c0 6-6 11-18 20z" fill="none" stroke="#e85d6f" stroke-width="2.5" stroke-dasharray="4 3"/>
+<g stroke="#5aa9d6" stroke-width="2" opacity=".7"><path d="M188 120q6 10 0 20M196 118q6 10 0 22"/></g><path d="M200 112h18l-3 14h-12z" fill="#1f7a8c"/>
+${P(84,146,.7,'#e85d3f',SK[1],'#1a1010')}${P(100,146,.62,'#f2b84b',SK[0],'#1a1010')}<path d="M78 128q14 8 28 0" fill="none" stroke="#e85d3f" stroke-width="5" stroke-linecap="round"/>
+<path d="M92 104c-5-4-8-6-8-9a3.5 3.5 0 0 1 8-1.5 3.5 3.5 0 0 1 8 1.5c0 3-3 5-8 9z" fill="#e85d6f"/>
+${K(46,146,.95,'#1f7a8c',SK[1],'#2a1a12',{dir:1})}`,
+
+aug27: () => `<rect width="240" height="160" fill="#fbe3ea"/>
+<rect y="120" width="240" height="40" fill="#b9d98a"/>
+<g fill="#a6693a">${[0,1,2,3,4,5,6,7,8,9,10,11].map(i=>`<rect x="${4+i*20}" y="96" width="6" height="30" rx="2"/>`).join('')}<rect x="0" y="102" width="240" height="4"/><rect x="0" y="114" width="240" height="4"/></g>
+${P(96,124,1,'#b5476b',SK[0],'#1a1010',{hold:'R'})}${P(144,124,1,'#2f5d8a',SK[3],'#c8873a',{hold:'L'})}
+<circle cx="120" cy="112" r="4" fill="${SK[1]}"/>
+${P(40,150,.6,'#f2b84b',SK[0],'#1a1010',{armR:1})}${P(196,150,.6,'#2f8a7a',SK[3],'#c8873a',{armL:1})}<circle cx="118" cy="136" r="6" fill="#e85d3f"/><path d="M112 136h12M118 130v12" stroke="#fff" stroke-width="1.2"/>
+<g transform="translate(120 40)"><path d="M0 0q-14-10-24-4q10 2 16 10q-10 2-14 8q12-2 22-12z" fill="#fff"/><path d="M0 0q14-10 24-4q-10 2-16 10q10 2 14 8q-12-2-22-12z" fill="#fff"/><circle cx="0" cy="-2" r="4" fill="#fff"/><path d="M-2 4l-6 8" stroke="#3f7d4e" stroke-width="2"/><ellipse cx="-9" cy="12" rx="3" ry="1.6" fill="#7cb07a"/></g>`,
+
+sep27: () => `<rect width="240" height="160" fill="#f1e3c8"/><circle cx="206" cy="30" r="18" fill="#f6c35b" opacity=".85"/>
+<rect y="124" width="240" height="36" fill="#9cc77f"/>
+<rect x="24" y="60" width="12" height="70" fill="#7a5132"/><circle cx="30" cy="48" r="26" fill="#4f9a6a"/>
+${K(196,142,1.05,'#8a5a2b',SK[1],'#1a1010',{dir:-1})}
+<g transform="translate(120 142) scale(1.15)">
+ <path d="M-11 0V-17a11 11 0 0 1 22 0V0z" fill="#a8b2bd"/><path d="M-8 -16h16v4h-16z" fill="#8a5a2b"/>
+ <circle cy="-36" r="8" fill="${SK[2]}"/><path d="M-10 -36a10 10 0 0 1 20 0v3H-10z" fill="#c9d1d9"/><path d="M0 -46v-6" stroke="#c4553a" stroke-width="3"/>
+ <path d="M14 -30v-22" stroke="#c9a46b" stroke-width="3"/><path d="M10 -32h8" stroke="#7a5132" stroke-width="3"/>
+ <path d="M-14 -28h-12v10c0 8 6 12 6 12s6-4 6-12z" fill="#e8a33f"/><path d="M-20 -26v16M-25 -20h10" stroke="#fff" stroke-width="2.4"/>
+</g>
+${P(60,142,.62,'#c4553a',SK[1],'#1a1010',{armL:1,armR:1})}
+<g transform="translate(150 50)" opacity=".9"><path d="M0 0q-14-12-26-6q12 4 18 14z" fill="#fff"/><path d="M0 0q14-12 26-6q-12 4-18 14z" fill="#fff"/></g>`,
+
+oct27: () => `<rect width="240" height="160" fill="#1e3a5f"/>${dots(25,21,0,0,240,60,.4,1,'#fff',.6)}
+<ellipse cx="60" cy="30" rx="40" ry="10" fill="#2c4d75"/><ellipse cx="190" cy="44" rx="46" ry="11" fill="#2c4d75"/>
+<path d="M188 52 50 22V82z" fill="${GOLD}" opacity=".22"/>
+<path d="M0 160V118Q40 110 80 118T160 116T240 120V160z" fill="#0f2236"/>
+<g fill="none" stroke="#3d6a94" stroke-width="2" stroke-linecap="round"><path d="M10 130q10-6 20 0M150 128q10-6 20 0M110 146q10-6 20 0M30 148q10-6 20 0"/></g>
+<path d="M170 128q24-14 52 0z" fill="#3a3f4a"/>
+<path d="M186 126l4-66h12l4 66z" fill="#f4f1ea"/><path d="M187.5 104h17l-.6 9h-15.8zM189 82h14l-.4 8h-13.2z" fill="#c4553a"/>
+<rect x="188" y="46" width="16" height="14" fill="${GOLD}"/><path d="M185 46 196 36 207 46z" fill="#c4553a"/>${cross(196,36,14,GOLD,2)}
+<path d="M44 132h64l-8 12H52z" fill="#a6693a"/><path d="M44 132h64" stroke="#7a4a20" stroke-width="2"/>
+${P(60,134,.62,'#c4553a',SK[1],'#1a1010')}${P(76,134,.5,'#f2b84b',SK[1],'#1a1010',{pray:1})}${P(94,134,.66,'#2f5d8a',SK[0],'#1a1010',{armR:1})}`,
+
+nov27: () => `<rect width="240" height="160" fill="#f7e2c4"/>
+<path d="M0 160V122Q120 112 240 124V160z" fill="#c9a46b"/>
+${church(196,126,.85,'#fff4e0','#a64b2a','#ffd66b')}
+<circle cx="40" cy="44" r="22" fill="#d9772f"/><circle cx="62" cy="36" r="18" fill="#f2c14e"/><rect x="46" y="54" width="8" height="70" fill="#6b4428"/>
+${[[90,30,'#a64b2a',20],[120,60,'#f2c14e',-30],[24,96,'#d9772f',40],[150,40,'#a64b2a',10]].map(([x,y,c,r])=>`<ellipse cx="${x}" cy="${y}" rx="5" ry="2.6" fill="${c}" transform="rotate(${r} ${x} ${y})"/>`).join('')}
+${P(78,142,.7,'#6b4428',SK[2],'#3b2416',{halo:1,armR:1})}<path d="M90 98l4-3" stroke="#fff"/>
+${P(102,142,.65,'#f4f1ea',SK[0],null,{veil:'#2f5d8a',halo:1,pray:1})}
+${P(124,142,.72,'#c4553a',SK[1],'#1a1010',{halo:1,hold:'R'})}<rect x="135" y="122" width="3" height="10" fill="#fff4e0"/><path d="M136.5 116c3 4 3 6 0 7-3-1-3-3 0-7z" fill="${GOLD}"/>
+${P(146,142,.6,'#a8b2bd',SK[3],'#c8873a',{halo:1})}
+${P(30,142,1,'#3f5d7a',SK[0],'#1a1010')}`,
+
+dec27: () => `<rect width="240" height="160" fill="#12193a"/>${dots(50,41,0,0,240,80,.4,1.2,'#fff',.85)}
+<path d="M150 18 112 100H188z" fill="#ffe9a0" opacity=".14"/>${spark(150,18,12,'#ffe9a0')}
+<path d="M0 160V112Q120 96 240 112V160z" fill="#2a2440"/>
+<path d="M96 118V74L150 46L204 74V118z" fill="#5a3a25"/><path d="M90 76L150 42L210 76" fill="none" stroke="#8a5a2b" stroke-width="7" stroke-linecap="round"/>
+<path d="M104 118V84h92v34z" fill="#ffcf6b" opacity=".85"/>
+<g transform="translate(150 112)"><path d="M-14 0l4-12h20l4 12z" fill="#a66b2a"/><ellipse cy="-13" rx="8" ry="4" fill="#fff4e0"/><circle cx="-3" cy="-16" r="3.2" fill="${SK[2]}"/><ellipse cx="-3" cy="-16" rx="6" ry="6" fill="none" stroke="${GOLD}" stroke-width="1.4"/></g>
+${K(124,116,.95,'#f4f1ea',SK[2],null,{veil:'#4a7fc4',dir:1})}
+${P(182,116,1,'#8a5a2b',SK[1],'#3b2416')}<path d="M196 116V78q0-6 5-6" fill="none" stroke="#c9a46b" stroke-width="2.4" stroke-linecap="round"/>
+${K(30,146,.85,'#c4553a',SK[1],'#1a1010')}${K(54,148,.62,'#f2b84b',SK[0],'#1a1010')}${K(72,148,.55,'#2f8a7a',SK[1],'#1a1010')}`
+};
+// Liturgical calendar (General Roman Calendar, U.S.) for Oct 2026 – Dec 2027.
+const LITCOL={green:'#3f8a50',violet:'#6b3fa0',rose:'#e07aa0',white:'#f4efe2',red:'#c4373a'};
+const ORD=n=>n+(n%100>=11&&n%100<=13?'th':({1:'st',2:'nd',3:'rd'}[n%10]||'th'));
+const D=(y,m,d)=>new Date(y,m-1,d);
+const SEASONS=[ // [start, end(inclusive), season, color]
+ [D(2026,10,1),D(2026,11,28),'Ordinary Time','green'],
+ [D(2026,11,29),D(2026,12,24),'Advent','violet'],
+ [D(2026,12,25),D(2027,1,10),'Christmas Season','white'],
+ [D(2027,1,11),D(2027,2,9),'Ordinary Time','green'],
+ [D(2027,2,10),D(2027,3,24),'Lent','violet'],
+ [D(2027,3,25),D(2027,3,27),'Paschal Triduum','white'],
+ [D(2027,3,28),D(2027,5,16),'Easter Season','white'],
+ [D(2027,5,17),D(2027,11,27),'Ordinary Time','green'],
+ [D(2027,11,28),D(2027,12,24),'Advent','violet'],
+ [D(2027,12,25),D(2027,12,31),'Christmas Season','white']];
+const SUNDAY_NAMES={
+ '2026-11-01':'All Saints','2026-11-22':'Our Lord Jesus Christ, King of the Universe',
+ '2026-11-29':'1st Sunday of Advent','2026-12-06':'2nd Sunday of Advent','2026-12-13':'3rd Sunday of Advent (Gaudete)','2026-12-20':'4th Sunday of Advent',
+ '2026-12-27':'The Holy Family','2027-01-03':'The Epiphany of the Lord','2027-01-10':'The Baptism of the Lord',
+ '2027-02-14':'1st Sunday of Lent','2027-02-21':'2nd Sunday of Lent','2027-02-28':'3rd Sunday of Lent','2027-03-07':'4th Sunday of Lent (Laetare)','2027-03-14':'5th Sunday of Lent','2027-03-21':'Palm Sunday of the Passion of the Lord',
+ '2027-03-28':'Easter Sunday of the Resurrection','2027-04-04':'2nd Sunday of Easter (Divine Mercy)','2027-04-11':'3rd Sunday of Easter','2027-04-18':'4th Sunday of Easter','2027-04-25':'5th Sunday of Easter','2027-05-02':'6th Sunday of Easter','2027-05-09':'7th Sunday of Easter','2027-05-16':'Pentecost Sunday',
+ '2027-05-23':'The Most Holy Trinity','2027-05-30':'The Most Holy Body and Blood of Christ','2027-08-15':'The Assumption of the Blessed Virgin Mary','2027-11-21':'Our Lord Jesus Christ, King of the Universe',
+ '2027-11-28':'1st Sunday of Advent','2027-12-05':'2nd Sunday of Advent','2027-12-12':'3rd Sunday of Advent (Gaudete)','2027-12-19':'4th Sunday of Advent','2027-12-26':'The Holy Family'};
+// Ordinary Time Sundays: count back from Christ the King (34th Sunday).
+function otSunday(dt){
+  const ck=dt<D(2027,1,1)?D(2026,11,22):D(2027,11,21);
+  if(dt<D(2027,3,1)&&dt>D(2027,1,1)){ // after Baptism of the Lord: Jan 17 = 2nd Sunday
+    return 2+Math.round((dt-D(2027,1,17))/6048e5);
+  }
+  return 34-Math.round((ck-dt)/6048e5);
+}
+// Feast colors (white unless listed)
+const RED_FEASTS=['St. Andrew','St. Stephen','Holy Innocents','Sts. Peter and Paul','Holy Cross','St. Maximilian Kolbe','St. Blaise','Pentecost','Palm Sunday','Good Friday'];
+const VIOLET_FEASTS=['All Souls','Ash Wednesday','Lent','Day of Prayer for Life','Advent','Advent begins','Holy Saturday'];
+const SEASON_ONLY=['Thanksgiving','Memorial Day · Visitation',"Mother's Day","Father's Day",'Confession','St. Nicholas Eve','Christmas Eve','Veterans Day · St. Martin','May Crowning'];
+function litInfo(y,m,d,label){
+  const dt=D(y,m,d),key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const s=SEASONS.find(([a,b])=>dt>=a&&dt<=b);
+  let season=s[2],color=s[3],sunday=null;
+  if(dt.getDay()===0){
+    sunday=SUNDAY_NAMES[key]||(season==='Ordinary Time'?`${ORD(otSunday(dt))} Sunday in Ordinary Time`:null);
+  }
+  if(label&&!SEASON_ONLY.includes(label)){
+    color=RED_FEASTS.includes(label)?'red':VIOLET_FEASTS.includes(label)?'violet':'white';
+    if(label==='Gaudete Sunday')color='rose';
+    if(label==='Veterans Day · St. Martin')color='white';
+  }
+  if(key==='2027-03-07'||label==='Gaudete Sunday')color='rose';
+  if(label==='Holy Saturday')color='violet';
+  return {season,color,sunday,key};
+}
+const readingsURL=(y,m,d)=>`https://bible.usccb.org/bible/readings/${String(m).padStart(2,'0')}${String(d).padStart(2,'0')}${String(y).slice(2)}.cfm`;
+const BOOK_SLUG=b=>({'Psalm':'psalms','Song of Songs':'songofsongs'}[b]||b.toLowerCase().replace(/\s+/g,''));
+const verseURL=ref=>{const m=ref.match(/^(.+?) (\d+):/);return `https://bible.usccb.org/bible/${BOOK_SLUG(m[1])}/${m[2]}`};
+// Monthly Catholic faith formation: topic, short teaching (our own words), Catechism of the Catholic Church reference, icon (60x60).
+const FI={
+ rosary:`<circle cx="30" cy="24" r="16" fill="none" stroke="#c9a46b" stroke-width="1.5" stroke-dasharray="0.1 5.2" stroke-linecap="round" style="stroke-width:4.4"/><path d="M30 40v6" stroke="#c9a46b" stroke-width="2"/><rect x="28.5" y="46" width="3" height="12" fill="#8a5a2b"/><rect x="25" y="49" width="10" height="3" fill="#8a5a2b"/><circle cx="30" cy="8" r="2.6" fill="#5b8fd6"/>`,
+ saints:`<g>${[[14,'#e07a1f'],[30,'#c4553a'],[46,'#2f5d8a']].map(([x,c])=>`<ellipse cx="${x}" cy="14" rx="7" ry="2.2" fill="none" stroke="#f2c14e" stroke-width="1.8"/><circle cx="${x}" cy="23" r="6" fill="#c68a5e"/><path d="M${x-8} 52V37a8 8 0 0 1 16 0V52z" fill="${c}"/>`).join('')}</g>`,
+ wreath:`<ellipse cx="30" cy="48" rx="24" ry="7" fill="#3f8a50"/>${[[14,'#6b3fa0',22],[25,'#6b3fa0',24],[36,'#e07aa0',20],[47,'#6b3fa0',22]].map(([x,c,h])=>`<rect x="${x-3}" y="${46-h}" width="6" height="${h}" rx="1.5" fill="${c}"/><path d="M${x} ${46-h-9}c3 4 3 7 0 8-3-1-3-4 0-8z" fill="#f2c14e"/>`).join('')}`,
+ baptism:`<path d="M8 46h44l-6 10H14z" fill="#9aa7b8"/><ellipse cx="30" cy="46" rx="22" ry="5" fill="#7cc4e0"/><path d="M30 8l-14 12q14 6 28 0z" fill="#f2c14e"/><path d="M18 20l12-12 12 12" fill="none" stroke="#d9a65b" stroke-width="1.5"/><g fill="#5aa9d6"><circle cx="28" cy="27" r="1.8"/><circle cx="32" cy="32" r="1.8"/><circle cx="29" cy="37" r="1.8"/></g>`,
+ oil:`<path d="M22 14h16v6c8 3 10 10 10 18 0 12-8 18-18 18s-18-6-18-18c0-8 2-15 10-18z" fill="#d9a65b"/><rect x="20" y="8" width="20" height="7" rx="2" fill="#8a5a2b"/><path d="M30 28v18M22 37h16" stroke="#fff" stroke-width="3"/>`,
+ cross:`<rect x="26" y="4" width="8" height="52" fill="#8a5a2b"/><rect x="12" y="15" width="36" height="8" fill="#8a5a2b"/><path d="M22 23q8 6 16 0" stroke="#f4efe2" stroke-width="3" fill="none"/><circle cx="30" cy="8" r="0"/><path d="M8 56h44" stroke="#3f8a50" stroke-width="3"/><path d="M14 52c4-6 8-6 10 0M38 52c4-6 8-6 10 0" fill="#e8e0f0"/>`,
+ eucharist:`<circle cx="30" cy="16" r="11" fill="#fff8e4" stroke="#f2c14e" stroke-width="2"/><path d="M30 10v12M24 16h12" stroke="#d9a65b" stroke-width="2"/><g stroke="#f2c14e" stroke-width="1.5">${[0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180;return `<path d="M${(30+Math.cos(r)*14).toFixed(1)} ${(16+Math.sin(r)*14).toFixed(1)}L${(30+Math.cos(r)*18).toFixed(1)} ${(16+Math.sin(r)*18).toFixed(1)}"/>`}).join('')}</g><path d="M18 30h24q-2 12-12 12t-12-12z" fill="#d9a65b"/><rect x="28" y="42" width="4" height="8" fill="#d9a65b"/><path d="M20 54q10-6 20 0z" fill="#d9a65b"/>`,
+ mary:`<path d="M14 54L18 22Q30 4 42 22L46 54z" fill="#5b8fd6"/><path d="M22 54l2-26h12l2 26z" fill="#fff"/><circle cx="30" cy="18" r="6" fill="#f1dcc4"/><path d="M28 34l2-8 2 8z" fill="#f1dcc4"/>${[0,1,2,3,4].map(i=>`<circle cx="${18+i*6}" cy="8" r="1.6" fill="#f2c14e"/>`).join('')}`,
+ bible:`<path d="M30 16C24 11 14 10 6 12v34c8-2 18-1 24 4 6-5 16-6 24-4V12c-8-2-18-1-24 4z" fill="#fff" stroke="#8a5a2b" stroke-width="2"/><path d="M30 16v34" stroke="#8a5a2b" stroke-width="1.5"/><path d="M40 12v26l3-3 3 3V11" fill="#c4373a"/><path d="M12 22h12M12 28h12M12 34h10M36 40h12" stroke="#c9b28a" stroke-width="1.5"/><path d="M18 40v-8M14 36h8" stroke="#c4373a" stroke-width="2"/>`,
+ stole:`<path d="M18 6q12 8 24 0l-4 50h-6l-2-40-2 40h-6z" fill="#6b3fa0"/><path d="M23 44v6M20 47h6M37 44v6M34 47h6" stroke="#f2c14e" stroke-width="1.6"/><path d="M8 52l8-8M52 52l-8-8" stroke="#c9a46b" stroke-width="2"/>`,
+ rings:`<circle cx="23" cy="34" r="13" fill="none" stroke="#f2c14e" stroke-width="4"/><circle cx="37" cy="34" r="13" fill="none" stroke="#d9a65b" stroke-width="4"/><path d="M30 4v14M24 9h12" stroke="#8a5a2b" stroke-width="3"/>`,
+ dove:`<path d="M30 30q-16-14-26-6q12 2 18 12zM30 30q16-14 26-6q-12 2-18 12z" fill="#fff" stroke="#c9d1d9"/><ellipse cx="30" cy="34" rx="6" ry="9" fill="#fff" stroke="#c9d1d9"/><path d="M30 8c6 7 6 12 0 14-6-2-6-7 0-14z" fill="#e85d3f"/><path d="M30 13c3 4 3 6 0 7-3-1-3-3 0-7z" fill="#f2c14e"/>`,
+ altar:`<rect x="8" y="34" width="44" height="22" fill="#f4efe2" stroke="#c9b28a"/><rect x="6" y="30" width="48" height="5" fill="#fff"/><rect x="27" y="12" width="6" height="18" fill="#8a5a2b"/><rect x="21" y="16" width="18" height="4" fill="#8a5a2b"/>${[13,47].map(x=>`<rect x="${x-2}" y="18" width="4" height="12" fill="#fff8e4"/><path d="M${x} 11c3 3 3 6 0 7-3-1-3-4 0-7z" fill="#f2c14e"/>`).join('')}<path d="M24 46h12" stroke="#c4373a" stroke-width="3"/>`,
+ orders:`<path d="M20 6q10 6 20 0l-2 48h-5l-3-38-3 38h-5z" fill="#f4efe2" stroke="#c9b28a"/><path d="M25 42v6M22 45h6M35 42v6M32 45h6" stroke="#f2c14e" stroke-width="1.6"/><path d="M42 30h12q-1 8-6 8t-6-8z" fill="#d9a65b"/><rect x="47" y="38" width="2" height="8" fill="#d9a65b"/><path d="M43 50q5-4 10 0z" fill="#d9a65b"/>`,
+ nativity:`<path d="M30 4l2.5 7 7 .5-5.5 4.5 2 7-6-4-6 4 2-7-5.5-4.5 7-.5z" fill="#f2c14e"/><path d="M14 52l6-16h20l6 16z" fill="#a66b2a"/><ellipse cx="30" cy="37" rx="12" ry="4" fill="#f4e3b0"/><circle cx="30" cy="34" r="4.5" fill="#c68a5e"/><ellipse cx="30" cy="34" rx="8" ry="8" fill="none" stroke="#f2c14e" stroke-width="1.4"/>`
+};
+const FORMATION={
+ oct26:{icon:'rosary',title:'The Holy Rosary',text:"The Rosary is a prayer on beads. We pray the Our Father, ten Hail Marys and the Glory Be while thinking about the life of Jesus with Mary. Each set of ten Hail Marys is called a decade.",ccc:'CCC 971, 2708'},
+ nov26:{icon:'saints',title:'The Communion of Saints',text:"The Church is one family: the saints in heaven, the souls being made ready for heaven in purgatory, and us on earth. The saints pray for us, and we pray for those who have died.",ccc:'CCC 946–962'},
+ dec26:{icon:'wreath',title:'Advent',text:"Advent is four weeks of getting ready to celebrate Jesus' birth and to welcome Him when He comes again. Violet means waiting and getting ready. Rose, on the third Sunday, means joy is near.",ccc:'CCC 524'},
+ jan27:{icon:'baptism',title:'Baptism',text:"Baptism is the first sacrament. With water and the words \"in the name of the Father, and of the Son, and of the Holy Spirit,\" we become children of God and members of His Church.",ccc:'CCC 1213'},
+ feb27:{icon:'oil',title:'Anointing of the Sick',text:"When someone is seriously ill or weak from old age, a priest anoints them with holy oil and prays for them. Jesus gives them strength, peace and courage, and sometimes healing.",ccc:'CCC 1499'},
+ mar27:{icon:'cross',title:'Lent and Holy Week',text:"Lent is forty days of prayer, fasting and almsgiving. In Holy Week we walk with Jesus through the Last Supper, His death on the cross, and His rising from the dead at Easter.",ccc:'CCC 1438, 1168'},
+ apr27:{icon:'eucharist',title:'The Holy Eucharist',text:"At Mass the bread and wine become the Body and Blood of Jesus. He is truly present. The Church calls the Eucharist the source and summit of the Christian life.",ccc:'CCC 1324, 1374'},
+ may27:{icon:'mary',title:'Mary, Our Mother',text:"Mary is the Mother of Jesus, and Jesus gave her to us as our Mother too. She always leads us to her Son. We honor her and ask her to pray for us.",ccc:'CCC 963–972'},
+ jun27:{icon:'bible',title:'The Bible, God\'s Word',text:"The Bible is God's Word. At every Mass we hear it read: a first reading, a psalm, a second reading on Sundays, and the Gospel, when we stand for the words of Jesus.",ccc:'CCC 101–104'},
+ jul27:{icon:'stole',title:'Confession (Reconciliation)',text:"In Confession we tell our sins to a priest, who forgives them in Jesus' name. We pray an Act of Contrition and do a penance. God's mercy is bigger than any sin.",ccc:'CCC 1422–1424'},
+ aug27:{icon:'rings',title:'Marriage and the Family',text:"In the sacrament of Marriage, a husband and wife promise to love each other faithfully for life. The Church calls the family a domestic church, a little church at home.",ccc:'CCC 1601, 1656'},
+ sep27:{icon:'dove',title:'Confirmation',text:"Confirmation seals us with the gift of the Holy Spirit. The bishop anoints the forehead with holy chrism, and the Spirit gives us strength to live and share our faith.",ccc:'CCC 1285'},
+ oct27:{icon:'altar',title:'The Holy Mass',text:"The Mass has two main parts. In the Liturgy of the Word we listen to God. In the Liturgy of the Eucharist, Jesus' sacrifice is made present and we receive Him in Holy Communion.",ccc:'CCC 1346'},
+ nov27:{icon:'orders',title:'Holy Orders',text:"Through Holy Orders, men are ordained as deacons, priests and bishops to serve God's people, preach the Gospel and celebrate the sacraments. Pray for priests and for vocations.",ccc:'CCC 1536'},
+ dec27:{icon:'nativity',title:'The Incarnation',text:"At Christmas we celebrate that God the Son became man, born of the Virgin Mary, to save us and show us the Father's love. We call this the Incarnation.",ccc:'CCC 456–460'}
+};
+const ficon=(k,size)=>`<svg viewBox="0 0 60 60" width="${size||60}" height="${size||60}" aria-hidden="true">${FI[k]}</svg>`;
+// Interactive Holy Rosary
+const RP={
+ sign:"In the name of the Father, and of the Son, and of the Holy Spirit. Amen.",
+ creed:"I believe in God, the Father almighty, Creator of heaven and earth, and in Jesus Christ, his only Son, our Lord, who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, died and was buried; he descended into hell; on the third day he rose again from the dead; he ascended into heaven, and is seated at the right hand of God the Father almighty; from there he will come to judge the living and the dead. I believe in the Holy Spirit, the holy catholic Church, the communion of saints, the forgiveness of sins, the resurrection of the body, and life everlasting. Amen.",
+ our:"Our Father, who art in heaven, hallowed be thy name; thy kingdom come, thy will be done on earth as it is in heaven. Give us this day our daily bread, and forgive us our trespasses, as we forgive those who trespass against us; and lead us not into temptation, but deliver us from evil. Amen.",
+ hail:"Hail Mary, full of grace, the Lord is with thee. Blessed art thou amongst women, and blessed is the fruit of thy womb, Jesus. Holy Mary, Mother of God, pray for us sinners, now and at the hour of our death. Amen.",
+ glory:"Glory be to the Father, and to the Son, and to the Holy Spirit, as it was in the beginning, is now, and ever shall be, world without end. Amen.",
+ fatima:"O my Jesus, forgive us our sins, save us from the fires of hell, lead all souls to heaven, especially those in most need of thy mercy.",
+ queen:"Hail, Holy Queen, Mother of Mercy, our life, our sweetness and our hope. To thee do we cry, poor banished children of Eve. To thee do we send up our sighs, mourning and weeping in this valley of tears. Turn then, most gracious advocate, thine eyes of mercy toward us, and after this our exile, show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.\nV. Pray for us, O holy Mother of God.\nR. That we may be made worthy of the promises of Christ.",
+ closing:"Let us pray. O God, whose only begotten Son, by his life, death, and resurrection, has purchased for us the rewards of eternal life, grant, we beseech thee, that while meditating on these mysteries of the most holy Rosary of the Blessed Virgin Mary, we may imitate what they contain and obtain what they promise, through the same Christ our Lord. Amen."
+};
+const MYST={
+ joyful:{name:'Joyful Mysteries',days:'Mondays and Saturdays',color:'#4a7fc4',list:[
+  ['The Annunciation','Luke 1:26–38','Humility'],['The Visitation','Luke 1:39–56','Love of neighbor'],['The Nativity of Jesus','Luke 2:1–20','Poverty of spirit'],['The Presentation in the Temple','Luke 2:22–38','Obedience'],['The Finding of Jesus in the Temple','Luke 2:41–52','Joy in finding Jesus']]},
+ luminous:{name:'Luminous Mysteries',days:'Thursdays',color:'#d9a21f',list:[
+  ['The Baptism of Jesus in the Jordan','Matthew 3:13–17','Openness to the Holy Spirit'],['The Wedding Feast at Cana','John 2:1–12','To Jesus through Mary'],['The Proclamation of the Kingdom','Mark 1:14–15','Repentance and trust in God'],['The Transfiguration','Matthew 17:1–8','Desire for holiness'],['The Institution of the Eucharist','Matthew 26:26–28','Love of the Eucharist']]},
+ sorrowful:{name:'Sorrowful Mysteries',days:'Tuesdays and Fridays',color:'#8b2e3c',list:[
+  ['The Agony in the Garden','Matthew 26:36–46','Sorrow for sin'],['The Scourging at the Pillar','Matthew 27:26','Purity'],['The Crowning with Thorns','Matthew 27:27–31','Courage'],['The Carrying of the Cross','Luke 23:26–32','Patience'],['The Crucifixion and Death of Jesus','Luke 23:33–46','Perseverance']]},
+ glorious:{name:'Glorious Mysteries',days:'Wednesdays and Sundays',color:'#3f8a50',list:[
+  ['The Resurrection','Matthew 28:1–10','Faith'],['The Ascension','Acts 1:6–11','Hope'],['The Descent of the Holy Spirit','Acts 2:1–4','Love of God'],['The Assumption of Mary','Revelation 12:1','Grace of a happy death'],['The Coronation of Mary','Revelation 12:1','Trust in Mary\'s prayers']]}
+};
+const DAYSET=['glorious','joyful','sorrowful','glorious','luminous','sorrowful','joyful'];
+const ORDW=['First','Second','Third','Fourth','Fifth'];
+// Build step list. bead ids: cross, L1, S1..S3, L2, medal, d{k}_{n} (k 1-5, n 1-10), M{k} (large loop beads before decades 2-5)
+function rosarySteps(set){
+  const M=MYST[set].list, st=[];
+  st.push({bead:'cross',label:'On the crucifix',parts:[['Sign of the Cross',RP.sign],["Apostles' Creed",RP.creed]]});
+  st.push({bead:'L1',label:'First large bead',parts:[['Our Father',RP.our]]});
+  ['faith','hope','charity'].forEach((v,i)=>st.push({bead:'S'+(i+1),label:`Small bead ${i+1} of 3 · for the virtue of ${v}`,parts:[['Hail Mary',RP.hail]]}));
+  st.push({bead:'L2',label:'Large bead before the medal',parts:[['Glory Be',RP.glory]]});
+  for(let k=1;k<=5;k++){
+    const [t,ref,fruit]=M[k-1];
+    st.push({bead:k===1?'L2':'M'+k,label:`${ORDW[k-1]} Mystery`,myst:k,parts:[[`Announce the ${ORDW[k-1]} ${MYST[set].name.replace(' Mysteries','')} Mystery`,`${t}. Think about this moment in the life of Jesus and Mary while you pray this decade.`],['Our Father',RP.our]]});
+    for(let n=1;n<=10;n++)st.push({bead:`d${k}_${n}`,label:`Decade ${k} · Hail Mary ${n} of 10`,myst:k,parts:[['Hail Mary',RP.hail]]});
+    st.push({bead:k<5?'M'+(k+1):'medal',label:`End of decade ${k}`,myst:k,parts:[['Glory Be',RP.glory],['O My Jesus (Fatima Prayer)',RP.fatima]]});
+  }
+  st.push({bead:'medal',label:'On the centerpiece',parts:[['Hail, Holy Queen',RP.queen]]});
+  st.push({bead:'medal',label:'Closing prayer',parts:[['Rosary Prayer',RP.closing],['Sign of the Cross',RP.sign]]});
+  return st;
+}
+function rosarySVG(){
+  const cx=150,cy=150,rx=118,ry=134,N=55;let beads='',ids=[];
+  // loop slots: 0 medal, then decade1 (1-10), M2 (11), decade2 (12-21), M3 (22), d3 (23-32), M4 (33), d4 (34-43), M5 (44), d5 (45-54)
+  for(let i=1;i<N;i++){
+    const ph=2*Math.PI*i/N,x=cx-rx*Math.sin(ph),y=cy+ry*Math.cos(ph);
+    let id,big=false;
+    if(i%11===0){id='M'+(i/11+1);big=true}else{const k=Math.floor(i/11)+1,n=i-(k-1)*11;id=`d${k}_${n}`}
+    beads+=`<circle class="bead${big?' big':''}" data-bead="${id}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big?8.5:5.6}"/>`;
+  }
+  const my=cy+ry; // medal
+  const pend=[['L2',my+24,true],['S3',my+42],['S2',my+56],['S1',my+70],['L1',my+90,true]];
+  pend.forEach(([id,y,big])=>beads+=`<circle class="bead${big?' big':''}" data-bead="${id}" cx="${cx}" cy="${y}" r="${big?8.5:5.6}"/>`);
+  const crossY=my+108;
+  return `<svg viewBox="0 0 300 440" class="rosary-svg" role="group" aria-label="Rosary beads">
+   <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#c9b28a" stroke-width="1.6"/>
+   <path d="M${cx} ${my}V${crossY}" stroke="#c9b28a" stroke-width="1.6"/>
+   ${beads}
+   <g class="bead medal" data-bead="medal" tabindex="-1"><path d="M${cx} ${my-13}l11 13-11 13-11-13z" fill="#e8d7a8" stroke="#a88a4a" stroke-width="1.5"/><text x="${cx}" y="${my+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#4a7fc4" font-family="Georgia,serif">M</text></g>
+   <g class="bead crossb" data-bead="cross"><rect x="${cx-4}" y="${crossY}" width="8" height="46" rx="1.5"/><rect x="${cx-17}" y="${crossY+11}" width="34" height="8" rx="1.5"/></g>
+  </svg>`;
+}
+let RS={set:DAYSET[new Date().getDay()],i:0,steps:null};
+function rosaryInit(){
+  const root=document.getElementById('rosary');
+  root.innerHTML=`
+  <div class="ro-head"><div><h2>The Holy Rosary</h2><p>Tap any bead, or use Next, to pray the whole Rosary together.</p></div>
+   <div class="ro-sets" role="tablist" aria-label="Mysteries">${Object.entries(MYST).map(([k,v])=>`<button type="button" role="tab" data-set="${k}" style="--sc:${v.color}"><b>${v.name.replace(' Mysteries','')}</b><span>${v.days}</span></button>`).join('')}</div></div>
+  <div class="ro-grid">
+   <div class="ro-beads">${rosarySVG()}<div class="ro-prog"><div id="ro-bar"></div></div><p class="ro-count" id="ro-count"></p></div>
+   <div class="ro-main">
+    <div class="ro-step card" aria-live="polite" id="ro-step"></div>
+    <div class="ro-ctl"><button type="button" id="ro-prev">‹ Back</button><button type="button" id="ro-next" class="pri">Next bead ›</button></div>
+    <div class="ro-myst card" id="ro-myst"></div>
+   </div>
+  </div>`;
+  root.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{RS.set=b.dataset.set;RS.steps=rosarySteps(RS.set);RS.i=0;rosaryRender()});
+  root.querySelectorAll('.rosary-svg [data-bead]').forEach(el=>{el.setAttribute('tabindex','0');el.setAttribute('role','button');
+    const go=()=>{const id=el.dataset.bead;let j=RS.steps.findIndex((s,k)=>s.bead===id&&k>=0);
+      // if this bead has several steps and we're already on one, advance within it
+      const idxs=RS.steps.map((s,k)=>s.bead===id?k:-1).filter(k=>k>=0);const cur=idxs.indexOf(RS.i);
+      j=cur>=0&&cur<idxs.length-1?idxs[cur+1]:idxs[0];RS.i=j;rosaryRender()};
+    el.addEventListener('click',go);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+  document.getElementById('ro-prev').onclick=()=>{if(RS.i>0){RS.i--;rosaryRender()}};
+  document.getElementById('ro-next').onclick=()=>{if(RS.i<RS.steps.length-1){RS.i++;rosaryRender()}};
+  RS.steps=rosarySteps(RS.set);rosaryRender();
+}
+function rosaryRender(){
+  const st=RS.steps,s=st[RS.i],M=MYST[RS.set];
+  document.querySelectorAll('#rosary [data-set]').forEach(b=>b.setAttribute('aria-selected',b.dataset.set===RS.set));
+  const done=new Set(st.slice(0,RS.i).map(x=>x.bead));
+  document.querySelectorAll('.rosary-svg [data-bead]').forEach(el=>{const id=el.dataset.bead;el.classList.toggle('done',done.has(id)&&id!==s.bead);el.classList.toggle('cur',id===s.bead)});
+  document.getElementById('ro-step').innerHTML=`<div class="ro-where">${esc(s.label)}${s.myst?` · ${esc(M.list[s.myst-1][0])}`:''}</div>${s.parts.map(([h,tx])=>`<h3>${esc(h)}</h3><p>${esc(tx).replace(/\n/g,'<br>')}</p>`).join('')}`;
+  document.getElementById('ro-bar').style.width=((RS.i+1)/st.length*100)+'%';
+  document.getElementById('ro-count').textContent=`Step ${RS.i+1} of ${st.length}`;
+  document.getElementById('ro-prev').disabled=RS.i===0;
+  const nx=document.getElementById('ro-next');nx.disabled=RS.i===st.length-1;nx.textContent=RS.i===st.length-1?'Amen ✓':'Next bead ›';
+  const today=DAYSET[new Date().getDay()];
+  document.getElementById('ro-myst').innerHTML=`<h3 style="color:${M.color}">${M.name}</h3><p class="ro-days">Prayed on ${M.days}${today===RS.set?' · today\'s mysteries':''}</p><ol>${M.list.map(([t,ref,fruit],k)=>`<li class="${s.myst===k+1?'on':''}"><button type="button" data-jump="${k+1}"><b>${t}</b><span>Fruit: ${fruit}</span></button><a href="${verseURL(ref)}" target="_blank" rel="noopener">${ref} ↗</a></li>`).join('')}</ol>`;
+  document.querySelectorAll('#ro-myst [data-jump]').forEach(b=>b.onclick=()=>{const k=+b.dataset.jump;RS.i=RS.steps.findIndex(x=>x.myst===k);rosaryRender()});
+}
+const ALL = CAL;
+const IDX={January:0,February:1,March:2,April:3,May:4,June:5,July:6,August:7,September:8,October:9,November:10,December:11};
+const DOW=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const idOf=(m,d)=>`${m.year}-${pad(IDX[m.name]+1)}-${pad(d)}`;
+let prayed=new Set();
+try{prayed=new Set(JSON.parse(localStorage.getItem('ofc-prayed')||'[]'))}catch(e){}
+const save=()=>{try{localStorage.setItem('ofc-prayed',JSON.stringify([...prayed]))}catch(e){}};
+const nav=document.getElementById('months'), main=document.getElementById('main'), fam=document.getElementById('family');
+const HAS_PHOTOS=typeof PHOTOS!=='undefined'&&Object.keys(PHOTOS).length>0;
+const polaroid=(k,cls='')=>`<figure class="pol ${cls}"><img src="${PHOTOS[k].src}" alt="${esc(PHOTOS[k].cap)}" loading="lazy"><figcaption>${esc(PHOTOS[k].cap)}</figcaption></figure>`;
+if(HAS_PHOTOS){fam.innerHTML=`<div class="fam-text"><h2>Our Family</h2><p class="motto">"The family that prays together stays together."<span>Venerable Patrick Peyton</span></p><p class="fprayer">${esc(FAMILY_PRAYER)}</p></div><div class="fam-photos">${Object.keys(PHOTOS).map((k,i)=>polaroid(k,'t'+i)).join('')}</div>`}else fam.hidden=true;
+let cur=0;
+ALL.forEach((m,i)=>{if(i===0||m.year!==ALL[i-1].year){const y=document.createElement('span');y.className='yr';y.textContent=m.year;nav.appendChild(y)}
+  const b=document.createElement('button');b.type='button';b.id='m-'+m.key;b.textContent=m.name.slice(0,3);b.setAttribute('aria-label',m.name+' '+m.year);b.dataset.i=i;b.onclick=()=>show(i);nav.appendChild(b)});
+function todayInfo(){const n=new Date();const i=ALL.findIndex(m=>m.year===n.getFullYear()&&IDX[m.name]===n.getMonth());return i<0?null:{i,d:n.getDate()}}
+function ringSvg(p){const r=12,c=2*Math.PI*r;return `<svg class="ring" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="${r}" fill="none" stroke="#e3e6ec" stroke-width="4"/><circle cx="15" cy="15" r="${r}" fill="none" stroke="#2e9d5b" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(c*p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 15 15)"/></svg>`}
+function progressHTML(m){const n=m.days.filter((_,d)=>prayed.has(idOf(m,d+1))).length;return `${ringSvg(n/m.days.length)}<span>${n} of ${m.days.length} days prayed</span>`}
+function show(i){
+  cur=(i+ALL.length)%ALL.length; const m=ALL[cur];
+  document.documentElement.style.setProperty('--m',m.color);document.documentElement.style.setProperty('--a',m.accent);
+  nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current',+b.dataset.i===cur));
+  const first=new Date(m.year,IDX[m.name],1).getDay(); const t=todayInfo();
+  let cells=DOW.map(d=>`<div class="dow">${d.slice(0,3)}</div>`).join('');
+  for(let k=0;k<first;k++)cells+='<div class="blank"></div>';
+  m.days.forEach(([tx,v,lb,hol],d)=>{const id=idOf(m,d+1),isT=t&&t.i===cur&&t.d===d+1,wd=(first+d)%7,li=litInfo(m.year,IDX[m.name]+1,d+1,lb),dup=lb&&tx.toLowerCase().startsWith(lb.split(' ·')[0].toLowerCase()),tag=hol?'Holy Day':(lb&&!dup?lb:(wd===0&&!lb?(li.sunday||'Sunday Mass'):''));
+    cells+=`<button type="button" class="day${lb?' special':''}${wd===0?' sun':''}${prayed.has(id)?' done':''}${isT?' today':''}" data-d="${d+1}" aria-label="${m.name} ${d+1}: ${esc(tx)}"><i class="lit" style="background:${LITCOL[li.color]}"></i>${isT?'<span class="tag">Today</span>':''}<span class="n">${d+1}</span><span class="wd">${DOW[wd]}</span>${tag?`<span class="lb${hol?' hol':''}">${esc(tag)}</span>`:''}<span class="t">${esc(tx)}</span><span class="f"><span class="v">${esc(v)}</span><span class="box" aria-hidden="true"></span></span></button>`});
+  main.innerHTML=`
+  <section class="spread" aria-label="${m.name} ${m.year} theme">
+    <div class="art"><svg viewBox="0 0 240 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${ART[m.key]()}</svg><div class="ttl"><h2>${m.name}</h2><div class="line">${esc(m.line)}</div><div class="devo">Month of ${esc(m.devotion)}</div></div></div>
+    <div class="side">
+      <div class="card psalm"><h3>Psalm of the month</h3><p class="pref">${m.psalm.ref}</p><p class="how">Read it together in your Catholic Bible and learn it by heart.</p><a class="lnk" href="${verseURL(m.psalm.ref)}" target="_blank" rel="noopener">Open ${m.psalm.ref.split(':')[0]} in the New American Bible ↗</a></div>
+      <div class="card bubble"><h3>Question of the month</h3><p>${esc(m.question)}</p></div>
+      ${HAS_PHOTOS&&MONTH_PHOTO[m.key]?`<div class="card famcard"><h3>Our family this month</h3>${polaroid(MONTH_PHOTO[m.key])}</div>`:''}
+      <div class="card form"><div class="fi">${ficon(FORMATION[m.key].icon,64)}</div><div><h3>Faith formation</h3><b>${esc(FORMATION[m.key].title)}</b><p>${esc(FORMATION[m.key].text)}</p><span class="ref">Catechism · ${FORMATION[m.key].ccc}</span></div></div>
+    </div>
+    <div class="act"><h3>Family activity <span>${esc(m.activity.title)}</span></h3><p>${esc(m.activity.text)}<span class="ref">${m.activity.ref}</span></p></div>
+    <div class="card prayer"><h3>Prayer to learn this month</h3><b>${esc(m.prayer.name)}</b><p>${esc(m.prayer.text)}</p></div>
+  </section>
+  <div class="calhead"><h2>${m.name} <span>${m.year}</span></h2><div class="progress" id="prog">${progressHTML(m)}</div></div>
+  <div class="grid">${cells}</div>`;
+  main.querySelectorAll('.day').forEach(b=>b.onclick=()=>openDay(cur,+b.dataset.d,b));
+  try{localStorage.setItem('ofc-key',m.key)}catch(e){}
+}
+// sheet
+let lastFocus=null, sheetState=null;
+function openDay(mi,d,from){
+  lastFocus=from||document.activeElement; const m=ALL[mi]; if(mi!==cur) show(mi);
+  const [tx,ref,lb,hol]=m.days[d-1]; const id=idOf(m,d); const date=new Date(m.year,IDX[m.name],d);
+  const li=litInfo(m.year,IDX[m.name]+1,d,lb);
+  if(!document.getElementById('scrim'))history.pushState({v:'sheet'},'');
+  closeSheet(true);
+  const scrim=document.createElement('div');scrim.className='scrim';scrim.id='scrim';
+  scrim.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-title">
+   <div class="sh-top"><div class="date">${date.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}</div><h2 id="sh-title">${esc(tx)}</h2>${lb?`<span class="hol">${esc(lb)}</span>`:''}${hol?`<span class="hol hd">Holy Day of Obligation</span>`:''}<button class="x" id="sh-x" type="button" aria-label="Close">×</button></div>
+   <div class="sh-body">
+    <div class="litday"><i style="background:${LITCOL[li.color]}"></i><span>${li.sunday?esc(li.sunday):esc(li.season)}</span></div>
+    <div class="verse"><h3>${esc(ref)}</h3><p class="vhint">Look up this verse together in your Catholic Bible, or open it in the New American Bible, the translation used at Mass in the U.S.</p><div class="links"><a class="lnk" href="${verseURL(ref)}" target="_blank" rel="noopener">Read ${esc(ref)} ↗</a><a class="lnk" href="${readingsURL(m.year,IDX[m.name]+1,d)}" target="_blank" rel="noopener">This day's Mass readings ↗</a></div></div>
+    ${/rosary/i.test(tx)?'<button class="prayed alt" id="sh-ro" type="button">Pray the Rosary now</button>':''}<button class="prayed" id="sh-pray" type="button" aria-pressed="${prayed.has(id)}">${prayed.has(id)?'✓ We prayed today':'Mark as prayed'}</button>
+    <div class="sh-nav"><button type="button" id="sh-prev">‹ Previous day</button><button type="button" id="sh-next">Next day ›</button></div>
+   </div></div>`;
+  document.body.appendChild(scrim);
+  sheetState={mi,d};
+  const g=x=>scrim.querySelector(x);
+  g('#sh-x').onclick=()=>closeSheet();
+  if(g('#sh-ro'))g('#sh-ro').onclick=()=>{closeSheet(true,true);history.replaceState({v:'ro'},'');setView(true,true)};
+  scrim.addEventListener('click',e=>{if(e.target===scrim)closeSheet()});
+  g('#sh-pray').onclick=()=>{prayed.has(id)?prayed.delete(id):prayed.add(id);save();const on=prayed.has(id);const b=g('#sh-pray');b.setAttribute('aria-pressed',on);b.textContent=on?'✓ We prayed today':'Mark as prayed';
+    const card=main.querySelector(`.day[data-d="${d}"]`);if(card)card.classList.toggle('done',on);const p=document.getElementById('prog');if(p)p.innerHTML=progressHTML(m)};
+  const step=dir=>{let nm=mi,nd=d+dir;if(nd<1){nm--;if(nm<0)return;nd=ALL[nm].days.length}else if(nd>m.days.length){nm++;if(nm>=ALL.length)return;nd=1}openDay(nm,nd,lastFocus)};
+  g('#sh-prev').disabled=(mi===0&&d===1); g('#sh-next').disabled=(mi===ALL.length-1&&d===m.days.length);
+  g('#sh-prev').onclick=()=>step(-1); g('#sh-next').onclick=()=>step(1);
+  g('#sh-pray').focus();
+}
+function closeSheet(silent,fromPop){const s=document.getElementById('scrim');if(s)s.remove();if(!silent&&!fromPop&&history.state&&history.state.v==='sheet'){skipPop=true;history.back()}if(!silent){sheetState=null;const card=main.querySelector(`.day[data-d]`)&&lastFocus;if(lastFocus&&document.body.contains(lastFocus))lastFocus.focus()}}
+document.addEventListener('keydown',e=>{if(!document.getElementById('scrim'))return;if(e.key==='Escape')closeSheet();else if(e.key==='ArrowRight'){document.getElementById('sh-next').click()}else if(e.key==='ArrowLeft'){document.getElementById('sh-prev').click()}else if(e.key==='Tab'){const f=[...document.querySelectorAll('#scrim button:not([disabled])')];const i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}}});
+let roReady=false;
+let skipPop=false,afterPop=null;
+window.addEventListener('popstate',()=>{if(skipPop){skipPop=false;const f=afterPop;afterPop=null;if(f)f();return}if(document.getElementById('scrim')){closeSheet(false,true);return}if(!document.getElementById('rosary').hidden)setView(false,true)});
+function setView(ro,fromPop,then){const wasRo=!document.getElementById('rosary').hidden;if(ro&&!wasRo&&!fromPop)history.pushState({v:'ro'},'');if(!ro&&wasRo&&!fromPop&&history.state&&history.state.v==='ro'){skipPop=true;afterPop=then||null;history.back();then=null}const r=document.getElementById('rosary');r.hidden=!ro;main.hidden=ro;nav.hidden=ro;if(HAS_PHOTOS)fam.hidden=ro;const b=document.getElementById('ro-btn');b.setAttribute('aria-pressed',ro);b.textContent=ro?'Back to calendar':'Pray the Rosary';if(ro&&!roReady){rosaryInit();roReady=true}window.scrollTo(0,0);if(then)then()}
+document.getElementById('ro-btn').onclick=()=>setView(document.getElementById('rosary').hidden);
+document.getElementById('today-btn').onclick=()=>setView(false,false,()=>{const t=todayInfo();if(t){show(t.i);openDay(t.i,t.d)}else{const n=new Date();show(n<new Date(2026,9,1)?0:ALL.length-1)}});
+let start=0;{const t=todayInfo();if(t)start=t.i;else if(new Date()>=new Date(2028,0,1))start=ALL.length-1}
+const h=location.hash.slice(1).toLowerCase();const hi=ALL.findIndex(m=>m.key===h);if(hi>=0)start=hi;
+if(h==='rosary'){setTimeout(()=>setView(true))}
+show(start);
+</script>
+<script>
+(function(){
+ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+ let deferred=null;const btn=document.getElementById('install-btn');
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;btn.hidden=false});
+ btn.addEventListener('click',async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice;deferred=null;btn.hidden=true});
+ window.addEventListener('appinstalled',()=>{btn.hidden=true});
+ const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+ const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+ let seen=false;try{seen=localStorage.getItem('ios-tip')==='1'}catch(e){}
+ if(ios&&!standalone&&!seen){const d=document.createElement('div');d.className='ios-tip';d.setAttribute('role','note');
+  d.innerHTML='<b>Install on iPhone:</b> tap the Share button, then <b>Add to Home Screen</b>.<button type="button" aria-label="Close">×</button>';
+  d.querySelector('button').onclick=()=>{d.remove();try{localStorage.setItem('ios-tip','1')}catch(e){}};document.body.appendChild(d)}
+})();
+</script>
+</body></html>
