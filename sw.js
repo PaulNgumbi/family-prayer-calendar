@@ -1,5 +1,5 @@
 // Offline support: cache the app shell, serve it when offline.
-const CACHE = 'family-prayer-v1.2';
+const CACHE = 'family-prayer-v1.2.1';
 const FILES = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png',
   './fonts/oswald-latin-500-normal.woff2', './fonts/oswald-latin-700-normal.woff2',

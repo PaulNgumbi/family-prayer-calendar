@@ -15,12 +15,17 @@
 - Links to each day's Mass readings and the New American Bible on the U.S. bishops' website (usccb.org)
 - Works fully offline and asks for no permissions
 
-## Install from the link (Android or iPhone)
+## Install from the link (phone or computer)
 
-- **Android (Chrome):** open the app link and tap **Install app** (or ⋮ menu → **Install app**).
-- **iPhone (Safari):** open the app link, tap **Share**, then **Add to Home Screen**.
+Open **https://paulngumbi.github.io/family-prayer-calendar/** and tap **Install app** at the top. If your browser can't install with one tap, the button shows the steps for your device:
 
-It gets its own icon, opens full-screen, and works offline.
+- **Android (Chrome):** ⋮ menu → **Add to Home screen** → **Install**
+- **Windows, Mac, Chromebook or Linux (Chrome):** click the install icon at the right of the address bar, or ⋮ menu → **Cast, save, and share** → **Install page as app**
+- **Microsoft Edge:** ⋯ menu → **Apps** → **Install this site as an app**
+- **Mac (Safari):** **File** → **Add to Dock**
+- **iPhone or iPad (Safari):** **Share** → **Add to Home Screen**
+
+Once installed it has its own icon, opens in its own window, and works offline.
 
 ## Install the APK (Android)
 
